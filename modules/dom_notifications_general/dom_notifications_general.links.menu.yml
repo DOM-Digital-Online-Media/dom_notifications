@@ -1,0 +1,5 @@
+dom_notifications_settings.send_general_message:
+  title: 'Send notification to all users'
+  description: 'Create a site-wide notification or all users to see.'
+  parent: system.dom_notifications_settings
+  route_name: dom_notifications_general.send_form

@@ -1,0 +1,6 @@
+dom_notifications.settings:
+  type: config_object
+  mapping:
+    keep_notification_months:
+      type: integer
+      label: 'Number of months to keep notifications for'

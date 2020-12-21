@@ -1,0 +1,25 @@
+dom_notifications.settings_tab:
+  route_name: dom_notifications.settings
+  title: 'Settings'
+  base_route: dom_notifications.settings
+
+dom_notifications.list_tab:
+  route_name: entity.dom_notification.collection
+  title: 'List'
+  base_route: dom_notifications.settings
+
+entity.dom_notification.canonical:
+  route_name: entity.dom_notification.canonical
+  base_route: entity.dom_notification.canonical
+  title: 'View'
+
+entity.dom_notification.edit_form:
+  route_name: entity.dom_notification.edit_form
+  base_route: entity.dom_notification.canonical
+  title: 'Edit'
+
+entity.dom_notification.delete_form:
+  route_name:  entity.dom_notification.delete_form
+  base_route:  entity.dom_notification.canonical
+  title: Delete
+  weight: 10

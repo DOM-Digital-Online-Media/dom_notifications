@@ -1,0 +1,39 @@
+<?php
+
+/**
+ * @file
+ * Enable/disable/update related hooks for the module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function dom_notifications_general_install() {
+  /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelManagerInterface $channel_manager */
+  $channel_manager = \Drupal::service('plugin.manager.dom_notifications_channel');
+  /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */
+  $channel = $channel_manager->createInstance(DOM_NOTIFICATIONS_GENERAL_CHANNEL);
+
+  // Retrieve all active users to subscribe to General channel. We don't need
+  // an uninstall hook because subscriptions table will be removed on uninstall.
+  $users = \Drupal::entityTypeManager()
+    ->getStorage('user')
+    ->getQuery()
+    ->condition('status', 1)
+    ->execute();
+
+  if ($channel && count($users)) {
+    $channel->subscribeUsers($users);
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function dom_notifications_general_uninstall() {
+  /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelManagerInterface $channel_manager */
+  $channel_manager = \Drupal::service('plugin.manager.dom_notifications_channel');
+  /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */
+  $channel = $channel_manager->createInstance(DOM_NOTIFICATIONS_GENERAL_CHANNEL);
+  $channel->delete();
+}

@@ -1,0 +1,7 @@
+name: 'Dom Notifications General channel'
+type: module
+description: 'Implementation of general channel for all users notifications like policy changes etc.'
+core: 8.x
+package: 'Dom'
+dependencies:
+  - dom_notifications:dom_notifications

@@ -1,0 +1,22 @@
+{#
+/**
+ * @file dom_notification.html.twig
+ * Default theme implementation to present Dom Notification data.
+ *
+ * This template is used when viewing Dom Notification pages.
+ *
+ *
+ * Available variables:
+ * - content: A list of content items. Use 'content' to print all content, or
+ * - attributes: HTML attributes for the container element.
+ *
+ * @see template_preprocess_dom_notification()
+ *
+ * @ingroup themeable
+ */
+#}
+<div{{ attributes.addClass('dom_notification') }}>
+  {% if content %}
+    {{- content -}}
+  {% endif %}
+</div>

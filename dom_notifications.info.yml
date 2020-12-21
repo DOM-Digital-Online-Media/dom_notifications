@@ -1,0 +1,7 @@
+name: 'Dom Notifications'
+type: module
+description: 'Implementation of notification entity and notification channels for users to subscribe'
+core: 8.x
+core_version_requirement: '^8 || ^9'
+package: 'Dom'
+configure: dom_notifications.settings

@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * @file
+ * Contains dom_notifications.module.
+ */
+
+/**
+ * Implements hook_cron().
+ */
+function dom_notifications_cron() {
+  $last_check = \Drupal::state()->get('dom_notifications.delete_check', 0);
+  $request_time = \Drupal::time()->getRequestTime();
+
+  // Execute only once every day, so it won't be cleaning up too often.
+  if ($request_time > $last_check + 24 * 60 * 60) {
+    /** @var \Drupal\dom_notifications\DomNotificationsServiceInterface $notifications_service */
+    $notifications_service = \Drupal::service('dom_notifications.service');
+    $notifications_service->executeCleaningUp();
+
+    \Drupal::state()->set('dom_notifications.delete_check', $request_time);
+  }
+}

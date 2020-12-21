@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * @file
+ * Module file for Dom Notifications General module.
+ */
+
+use Drupal\Core\Link;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+define('DOM_NOTIFICATIONS_GENERAL_CHANNEL', 'general');
+
+/**
+ * Implements hook_help().
+ */
+function dom_notifications_general_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.dom_notifications_general':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Implementation of general channel for all users notifications like policy changes etc.') . '</p>';
+      $output .= '<p>' . t('Follow @link to send notification of that kind.', [
+        '@link' => Link::createFromRoute(t('this link'), 'dom_notifications_general.send'),
+      ]) . '</p>';
+      return $output;
+
+  }
+}

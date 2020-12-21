@@ -1,0 +1,63 @@
+<?php
+
+/**
+ * @file
+ * Enable/disable/update/schema related hooks for the module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function dom_notifications_stacking_schema() {
+  return [
+    'dom_notifications_stacking' => [
+      'description' => 'Tracks how many notifications are stacked per channel',
+      'fields' => [
+        'channel_plugin_id' => [
+          'description' => 'Plugin ID as it is written in channel plugin annotation.',
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ],
+        'channel_id' => [
+          'description' => 'Channel ID.',
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ],
+        'count' => [
+          'description' => 'The number of notifications stacked so far on the channel.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+        ],
+      ],
+      'primary key' => ['channel_id'],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_install().
+ */
+function dom_notifications_stacking_install() {
+  /** @var \Drupal\dom_notifications\DomNotificationsServiceInterface $notification_service */
+  $notification_service = \Drupal::service('dom_notifications.service');
+  $channels = $notification_service->getChannelManager()->getDefinitions();
+
+  $channels_configs = [];
+  foreach (array_keys($channels) as $channel) {
+    $channels_configs[] = [
+      'channel_plugin' => $channel,
+      'stack' => 1,
+      'message' => '',
+      'uri' => '',
+    ];
+  }
+
+  \Drupal::service('config.factory')
+    ->getEditable('dom_notifications_stacking.settings')
+    ->set('channels', $channels_configs)
+    ->save();
+}

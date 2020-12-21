@@ -1,0 +1,7 @@
+dom_notifications_general.send_form:
+  path: 'admin/config/system/dom-notifications/send-general'
+  defaults:
+    _form: '\Drupal\dom_notifications_general\Form\DomNotificationsGeneralSendForm'
+    _title: 'Send notification to all users'
+  requirements:
+    _permission: 'create general channel notifications'

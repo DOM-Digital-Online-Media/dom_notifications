@@ -1,0 +1,4 @@
+dom_notifications_stacking.settings_form:
+  route_name: dom_notifications_stacking.settings_form
+  title: 'Stacking'
+  base_route: dom_notifications.settings

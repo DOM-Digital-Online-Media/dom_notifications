@@ -1,0 +1,5 @@
+dom_notifications_stacking.settings_form:
+  title: 'Stacking settings'
+  description: 'Configure notifications stacking per channel.'
+  parent: system.dom_notifications_settings
+  route_name: dom_notifications_stacking.settings_form

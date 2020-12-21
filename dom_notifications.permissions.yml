@@ -1,0 +1,11 @@
+administer dom notifications:
+  title: 'Administer Dom Notifications'
+  description: 'Allow to access the config part of Dom Notification module.'
+  restrict access: true
+
+view published dom notification entities:
+  title: 'View published Dom Notifications'
+
+view unpublished dom notification entities:
+  title: 'View unpublished Dom Notifications'
+

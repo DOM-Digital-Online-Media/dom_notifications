@@ -1,0 +1,15 @@
+{
+    "name": "dom_notifications",
+    "type": "drupal-module",
+    "description": "Implementation of notification entity and notification channels for users to subscribe",
+    "keywords": [ "Drupal", "DOM" ],
+    "homepage": "https://github.com/DOM-Digital-Online-Media/dom_notifications",
+    "minimum-stability": "dev",
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/dom_notifications",
+        "source": "http://cgit.drupalcode.org/dom_notifications"
+    },
+    "require-dev": {
+        "drupal/core": "^8 || ^9"
+    }
+}

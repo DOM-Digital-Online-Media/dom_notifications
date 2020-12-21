@@ -1,0 +1,95 @@
+<?php
+
+/**
+ * @file
+ * Custom tables, updates and install/uninstall functionality.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function dom_notifications_schema() {
+  return [
+    'dom_notifications_user_channels' => [
+      'description' => 'Tracks users and notification channels they subscribed to.',
+      'fields' => [
+        'channel_plugin_id' => [
+          'description' => 'Plugin ID as it is written in channel plugin annotation.',
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ],
+        'uid' => [
+          'description' => 'User ID of a user subscribed to the channel.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+        ],
+        'channel_id' => [
+          'description' => 'Channel ID without placeholders.',
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ],
+        'notify' => [
+          'description' => 'Boolean indicating Whether or not user should be notified about the notification for the channel.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 1,
+          'size' => 'tiny',
+        ],
+      ],
+      'primary key' => ['uid', 'channel_id'],
+      'foreign keys' => [
+        'user' => [
+          'table' => 'users',
+          'columns' => [
+            'uid' => 'uid',
+          ],
+        ],
+        'notification' => [
+          'table' => 'dom_notification',
+          'columns' => [
+            'channel_id' => 'channel_id',
+          ],
+        ],
+      ],
+    ],
+    'dom_notifications_read' => [
+      'description' => 'Tracks users and notification that they already read.',
+      'fields' => [
+        'uid' => [
+          'description' => 'User ID.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+        ],
+        'nid' => [
+          'description' => 'Dom Notification ID.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+        ],
+      ],
+      'primary key' => ['uid', 'nid'],
+      'foreign keys' => [
+        'user' => [
+          'table' => 'users',
+          'columns' => [
+            'uid' => 'uid',
+          ],
+        ],
+        'notification' => [
+          'table' => 'dom_notification',
+          'columns' => [
+            'nid' => 'id',
+          ],
+        ],
+      ],
+    ],
+  ];
+}

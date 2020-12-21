@@ -1,0 +1,7 @@
+dom_notifications.settings:
+  path: 'admin/config/system/dom-notifications'
+  defaults:
+    _form: '\Drupal\dom_notifications\Form\DomNotificationsSettingsForm'
+    _title: 'DOM Notification settings'
+  requirements:
+    _permission: 'administer dom notifications'

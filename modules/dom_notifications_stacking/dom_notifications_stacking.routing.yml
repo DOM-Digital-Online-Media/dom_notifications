@@ -1,0 +1,7 @@
+dom_notifications_stacking.settings_form:
+  path: '/admin/config/system/dom-notifications/stacking'
+  defaults:
+    _form: '\Drupal\dom_notifications_stacking\Form\DomNotificationStackingSettingsForm'
+    _title: 'Stacking settings'
+  requirements:
+    _permission: 'manage dom notifications stacking settings'

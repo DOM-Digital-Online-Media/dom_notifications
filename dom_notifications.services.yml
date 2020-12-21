@@ -1,0 +1,11 @@
+services:
+  logger.channel.dom_notifications:
+    parent: logger.channel_base
+    arguments: ['dom_notifications']
+  plugin.manager.dom_notifications_channel:
+    class: Drupal\dom_notifications\Plugin\DomNotificationsChannelManager
+    parent: default_plugin_manager
+    arguments: ['@database', '@logger.channel.dom_notifications']
+  dom_notifications.service:
+    class: Drupal\dom_notifications\DomNotificationsService
+    arguments: ['@entity_type.manager', '@database', '@current_user', '@plugin.manager.dom_notifications_channel', '@config.factory', '@string_translation', '@datetime.time']

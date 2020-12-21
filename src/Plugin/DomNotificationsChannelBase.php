@@ -1,0 +1,326 @@
+<?php
+
+namespace Drupal\dom_notifications\Plugin;
+
+use Drupal\Component\Plugin\PluginBase;
+use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
+use Drupal\Core\Database\Connection;
+use Drupal\Core\Database\Query\Condition;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\user\UserInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+
+/**
+ * Base class for Dom Notifications channel plugins.
+ */
+class DomNotificationsChannelBase extends PluginBase implements DomNotificationsChannelInterface {
+
+  /**
+   * Notification channel manager service.
+   *
+   * @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelManagerInterface
+   */
+  protected $channelManager;
+
+  /**
+   * Database service.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $database;
+
+  /**
+   * Entity type manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
+   * Cache object.
+   *
+   * @var \Drupal\Core\Cache\CacheTagsInvalidatorInterface
+   */
+  protected $invalidator;
+
+  /**
+   * {@inheritDoc}
+   */
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, DomNotificationsChannelManagerInterface $channel_manager, Connection $database, EntityTypeManagerInterface $entity_type_manager, CacheTagsInvalidatorInterface $invalidator) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
+    $this->channelManager = $channel_manager;
+    $this->database = $database;
+    $this->entityTypeManager = $entity_type_manager;
+    $this->invalidator = $invalidator;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $container->get('plugin.manager.dom_notifications_channel'),
+      $container->get('database'),
+      $container->get('entity_type.manager'),
+      $container->get('cache_tags.invalidator')
+    );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function id() {
+    return $this->getPluginId();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getBaseID() {
+    $definition = $this->getPluginDefinition();
+    return $definition['base_id'] ?? $this->id();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function isBase() {
+    $definition = $this->getPluginDefinition();
+    return !isset($definition['base']);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function isMuteAllowed() {
+    $definition = $this->getPluginDefinition();
+    return $this->isBase()
+      ? $definition['allow_mute'] ?? TRUE
+      : $this->getBaseChannel()->isMuteAllowed();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getLabel() {
+    $definition = $this->getPluginDefinition();
+    return $definition['label']->__toString();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getDefaultMessage() {
+    $definition = $this->getPluginDefinition();
+    return $definition['default_message'] ?? NULL;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getBaseChannel() {
+    if ($this->isBase()) {
+      return NULL;
+    }
+    $definition = $this->getPluginDefinition();
+    return $this->channelManager->createInstance($definition['base']);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getSpecificChannels() {
+    if (!$this->isBase()) {
+      return [];
+    }
+    $return = [];
+    $channels = $this->channelManager->getSpecificChannels();
+    foreach ($channels as $channel) {
+      if ($channel->getBaseID() === $this->id()) {
+        $return[] = $channel;
+      }
+    }
+    return $return;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getComputedChannelID(UserInterface $user = NULL) {
+    return $this->id();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function isSubscribed($uid) {
+    return $this->database
+      ->select('dom_notifications_user_channels', 'dnuc')
+      ->condition('dnuc.channel_plugin_id', $this->id())
+      ->condition('dnuc.uid', $uid)
+      ->countQuery()
+      ->execute()
+      ->fetchField() === '1';
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getSubscribedUsers() {
+    return $this->database
+      ->select('dom_notifications_user_channels', 'dnuc')
+      ->fields('dnuc', ['uid'])
+      ->condition('channel_plugin_id', $this->id())
+      ->execute()
+      ->fetchCol();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function subscribeUsers(array $users, $notify = TRUE) {
+    $plugin_id = $this->id();
+
+    // Retrieve array of users that are not subscribed and clear cache for them.
+    $users_to_add = array_diff($users, $this->getSubscribedUsers());
+
+    // Determine whether we need user object to get computed channel ID.
+    $computed = $this->id() !== $this->getBaseID();
+
+    $query = $this->database->insert('dom_notifications_user_channels');
+    $query->fields(['uid', 'channel_id', 'channel_plugin_id', 'notify']);
+    foreach ($users_to_add as $uid) {
+      // Do not load user if we don't have computed channel name
+      // that requires user object.
+      $user = NULL;
+      if ($computed) {
+        /** @var \Drupal\user\UserInterface $user */
+        $user = $this->entityTypeManager->getStorage('user')->load($uid);
+      }
+
+      $query->values([
+        $uid,
+        $this->getComputedChannelID($user),
+        $plugin_id,
+        (int) $notify
+      ]);
+    }
+
+    $this->invalidator->invalidateTags(array_map(function ($id) {
+      return 'user:' . $id;
+    }, $users_to_add));
+    $this->invalidateNotificationCaches();
+
+    return $query->execute();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function unsubscribeUsers(array $users) {
+    $query = $this->database
+      ->delete('dom_notifications_user_channels')
+      ->condition('channel_plugin_id', $this->id())
+      ->condition('uid', $users);
+
+    $this->invalidator->invalidateTags(array_map(function ($id) {
+      return 'user:' . $id;
+    }, $users));
+    $this->invalidateNotificationCaches();
+
+    return $query->execute();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getAlertsStatus($uid) {
+    return (bool) $this->database
+      ->select('dom_notifications_user_channels', 'dnuc')
+      ->fields('dnuc', ['notify'])
+      ->condition('uid', $uid)
+      ->condition('channel_plugin_id', $this->id())
+      ->execute()
+      ->fetchField();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function setAlertsStatus($uid, $status = TRUE) {
+    $this->database
+      ->update('dom_notifications_user_channels')
+      ->fields(['notify' => (int) $status])
+      ->condition('uid', $uid)
+      ->condition('channel_plugin_id', $this->id())
+      ->execute();
+
+    foreach ($this->getSpecificChannels() as $channel) {
+      $channel->setAlertsStatus($uid, $status);
+    }
+
+    // Invalidate caches.
+    $this->invalidator->invalidateTags(['user:' . $uid]);
+    $this->invalidateNotificationCaches();
+
+    return $this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function unsubscribeAll() {
+    $this->invalidator->invalidateTags(array_map(function ($id) {
+      return 'user:' . $id;
+    }, $this->getSubscribedUsers()));
+
+    $this->database
+      ->delete('dom_notifications_user_channels')
+      ->condition('channel_plugin_id', $this->id())
+      ->execute();
+
+    return $this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function delete() {
+    $query = $this->database->select('dom_notification_field_data', 'dnfd');
+    $query->addJoin('INNER', 'dom_notifications_user_channels', 'dnuc', 'dnfd.channel_id = dnuc.channel_id');
+    $query->fields('dnfd', ['id']);
+    $query->condition('dnuc.channel_plugin_id', $this->id());
+    $notification_ids = $query->execute()->fetchCol();
+
+    // Clear up all the related notifications.
+    if (!empty($notification_ids)) {
+      $notification_storage =$this->entityTypeManager->getStorage('dom_notification');
+      $notification_storage->delete($notification_storage->loadMultiple($notification_ids));
+    }
+
+    // Clear user subscriptions.
+    $this->unsubscribeAll();
+
+    return $this;
+  }
+
+  /**
+   * Helper function to invalidate entity cache for notification on the channel.
+   */
+  private function invalidateNotificationCaches() {
+    $query = $this->database->select('dom_notification_field_data', 'dnfd');
+    $query->addJoin('INNER', 'dom_notifications_user_channels', 'dnuc', 'dnuc.channel_id = dnfd.channel_id');
+    $query->fields('dnfd', ['id']);
+    $query->condition('dnuc.channel_plugin_id', $this->id());
+    $notification_ids = $query->distinct()->execute()->fetchCol();
+
+    $this->invalidator->invalidateTags(array_map(function ($id) {
+      return 'dom_notification:' . $id;
+    }, $notification_ids));
+  }
+
+}
