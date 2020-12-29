@@ -15,8 +15,25 @@ class DomNotificationViewsData extends EntityViewsData {
   public function getViewsData() {
     $data = parent::getViewsData();
 
-    // Additional information for Views integration, such as table joins, can be
-    // put here.
+    $data[$this->entityType->getBaseTable()]['computed_message'] = [
+      'title' => $this->t('Computed message'),
+      'help' => $this->t('Notification message with all the placeholders replaced.'),
+      'field' => [
+        'id' => 'field',
+        'default_formatter' => 'string',
+        'field_name' => 'computed_message',
+      ],
+    ];
+    $data[$this->entityType->getBaseTable()]['redirect_link'] = [
+      'title' => $this->t('Link'),
+      'help' => $this->t('Final link notification leads to.'),
+      'field' => [
+        'id' => 'field',
+        'default_formatter' => 'string',
+        'field_name' => 'redirect_link',
+      ],
+    ];
+
     return $data;
   }
 

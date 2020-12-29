@@ -7,6 +7,7 @@ use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\dom_notifications\DomNotificationsException;
+use GuzzleHttp\Psr7\Uri;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -81,10 +82,13 @@ class DomNotificationsGeneralSendForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $message = Html::escape($form_state->getValue('message'));
-    $link = $form_state->getValue('link');
+    $link = new Uri($form_state->getValue('link'));
 
     try {
-      $this->domNotificationsService->addNotification(DOM_NOTIFICATIONS_GENERAL_CHANNEL, $message, ['redirect_uri' => $link]);
+      if ($notification = $this->domNotificationsService->addNotification(DOM_NOTIFICATIONS_GENERAL_CHANNEL, [], $message)) {
+        $notification->setRedirectUri($link);
+        $notification->save();
+      }
       $this->messenger()->addStatus($this->t('The notification message has been sent.'));
     }
     catch (DomNotificationsException $e) {

@@ -5,4 +5,17 @@
  * Module file for Dom Notifications Stacking module.
  */
 
+use Drupal\Core\Field\BaseFieldDefinition;
 
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function dom_notifications_stacking_entity_base_field_info(\Drupal\Core\Entity\EntityTypeInterface $entity_type) {
+  $fields = [];
+  if ($entity_type->id() === 'dom_notification') {
+    $fields['stacked'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Is stacked'))
+      ->setDescription(t('Indicates if the notification is a stacked notification for number of events.'));
+  }
+  return $fields;
+}

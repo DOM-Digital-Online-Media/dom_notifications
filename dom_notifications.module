@@ -21,3 +21,25 @@ function dom_notifications_cron() {
     \Drupal::state()->set('dom_notifications.delete_check', $request_time);
   }
 }
+
+/**
+ * Implements hook_entity_update().
+ */
+function dom_notifications_entity_update(Drupal\Core\Entity\EntityInterface $entity) {
+  $related_notifications = \Drupal::entityTypeManager()
+    ->getStorage('dom_notification')
+    ->loadByProperties([
+      'related_entity_type' => $entity->getEntityTypeId(),
+      'related_entity_id' => $entity->id(),
+    ]);
+
+  if (empty($related_notifications)) {
+    return;
+  }
+
+  $tags = [];
+  foreach ($related_notifications as $notification) {
+    $tags = array_merge($tags, $notification->getCacheTags());
+  }
+  \Drupal\Core\Cache\Cache::invalidateTags($tags);
+}

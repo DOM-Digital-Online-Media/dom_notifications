@@ -6,7 +6,7 @@ dependencies:
     - serialization
     - user
 _core:
-  default_config_hash: Jjc69ruw-kWzFK76bRGV-HFEmepYWKocwKYs1PbyN0I
+  default_config_hash: '-wPlaGpa67h1VLb5luhTmQ7GXoqIRCUgV2ftgmdfwik'
 id: dom_user_notifications
 label: 'User notifications'
 module: views
@@ -252,10 +252,10 @@ display:
           empty_zero: false
           hide_alter_empty: true
           plugin_id: standard
-        message:
-          id: message
-          table: dom_notification_field_data
-          field: message
+        computed_message:
+          id: computed_message
+          table: dom_notification
+          field: computed_message
           relationship: none
           group_type: group
           admin_label: ''
@@ -315,7 +315,70 @@ display:
           separator: ', '
           field_api_classes: false
           entity_type: dom_notification
-          entity_field: message
+          plugin_id: field
+        redirect_link:
+          id: redirect_link
+          table: dom_notification
+          field: redirect_link
+          relationship: none
+          group_type: group
+          admin_label: ''
+          label: ''
+          exclude: false
+          alter:
+            alter_text: false
+            text: ''
+            make_link: false
+            path: ''
+            absolute: false
+            external: false
+            replace_spaces: false
+            path_case: none
+            trim_whitespace: false
+            alt: ''
+            rel: ''
+            link_class: ''
+            prefix: ''
+            suffix: ''
+            target: ''
+            nl2br: false
+            max_length: 0
+            word_boundary: true
+            ellipsis: true
+            more_link: false
+            more_link_text: ''
+            more_link_path: ''
+            strip_tags: false
+            trim: false
+            preserve_tags: ''
+            html: false
+          element_type: ''
+          element_class: ''
+          element_label_type: ''
+          element_label_class: ''
+          element_label_colon: false
+          element_wrapper_type: ''
+          element_wrapper_class: ''
+          element_default_classes: true
+          empty: ''
+          hide_empty: false
+          empty_zero: false
+          hide_alter_empty: true
+          click_sort_column: value
+          type: string
+          settings:
+            link_to_entity: false
+          group_column: value
+          group_columns: {  }
+          group_rows: true
+          delta_limit: 0
+          delta_offset: 0
+          delta_reversed: false
+          delta_first_last: false
+          multi_type: separator
+          separator: ', '
+          field_api_classes: false
+          entity_type: dom_notification
           plugin_id: field
         created:
           id: created
@@ -384,56 +447,6 @@ display:
           entity_type: dom_notification
           entity_field: created
           plugin_id: field
-        notification_link:
-          id: notification_link
-          table: dom_notification
-          field: notification_link
-          relationship: none
-          group_type: group
-          admin_label: ''
-          label: ''
-          exclude: false
-          alter:
-            alter_text: false
-            text: ''
-            make_link: false
-            path: ''
-            absolute: false
-            external: false
-            replace_spaces: false
-            path_case: none
-            trim_whitespace: false
-            alt: ''
-            rel: ''
-            link_class: ''
-            prefix: ''
-            suffix: ''
-            target: ''
-            nl2br: false
-            max_length: 0
-            word_boundary: true
-            ellipsis: true
-            more_link: false
-            more_link_text: ''
-            more_link_path: ''
-            strip_tags: false
-            trim: false
-            preserve_tags: ''
-            html: false
-          element_type: ''
-          element_class: ''
-          element_label_type: ''
-          element_label_class: ''
-          element_label_colon: false
-          element_wrapper_type: ''
-          element_wrapper_class: ''
-          element_default_classes: true
-          empty: ''
-          hide_empty: false
-          empty_zero: false
-          hide_alter_empty: true
-          entity_type: dom_notification
-          plugin_id: dom_notifications_link_field
         notify:
           id: notify
           table: dom_notifications_user_channels
@@ -711,7 +724,61 @@ display:
             default_group_multiple: {  }
             group_items: {  }
           plugin_id: string
+        not_author:
+          id: not_author
+          table: dom_notification_field_data
+          field: not_author
+          relationship: none
+          group_type: group
+          admin_label: ''
+          operator: '='
+          value: ''
+          group: 1
+          exposed: false
+          expose:
+            operator_id: ''
+            label: ''
+            description: ''
+            use_operator: false
+            operator: ''
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: ''
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+          user: uid
+          entity_type: dom_notification
+          plugin_id: dom_notifications_not_author
       sorts:
+        id:
+          id: id
+          table: dom_notification_field_data
+          field: id
+          relationship: none
+          group_type: group
+          admin_label: ''
+          order: DESC
+          exposed: false
+          expose:
+            label: ''
+          entity_type: dom_notification
+          entity_field: id
+          plugin_id: standard
         created:
           id: created
           table: dom_notification_field_data
@@ -817,8 +884,26 @@ display:
             id:
               alias: ''
               raw_output: false
+            uuid:
+              alias: ''
+              raw_output: false
             channel_plugin_id:
               alias: channel_id
+              raw_output: false
+            computed_message:
+              alias: message
+              raw_output: false
+            redirect_link:
+              alias: link
+              raw_output: false
+            created:
+              alias: ''
+              raw_output: false
+            notify:
+              alias: ''
+              raw_output: false
+            is_read:
+              alias: ''
               raw_output: false
       display_description: ''
       auth: {  }

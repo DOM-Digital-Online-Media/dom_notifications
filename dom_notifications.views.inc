@@ -12,15 +12,18 @@
 function dom_notifications_views_data() {
   $data = [];
 
-  $data['dom_notification']['notification_link'] = [
-    'title' => t('Notification link'),
-    'field' => [
-      'id' => 'dom_notifications_link_field',
+  // Notification author filter.
+  $data['dom_notification_field_data']['not_author'] = [
+    'title' => t('Not author'),
+    'help' => t('Allows to filter out notifications user is author of.'),
+    'real field' => 'uid',
+    'filter' => [
+      'id' => 'dom_notifications_not_author',
     ],
   ];
 
   // Add user channels plugin table fields.
-  $data['dom_notifications_user_channels']['table']['group'] = t('Dom notification');
+  $data['dom_notifications_user_channels']['table']['group'] = t('Dom Notification');
   $data['dom_notifications_user_channels']['table']['join'] = [
     'dom_notification_field_data' => [
       'left_field' => 'channel_id',
@@ -64,7 +67,7 @@ function dom_notifications_views_data() {
   ];
 
   // Add read status table fields.
-  $data['dom_notifications_read']['table']['group'] = t('Dom notification');
+  $data['dom_notifications_read']['table']['group'] = t('Dom Notification');
   $data['dom_notifications_read']['table']['join'] = [
     'dom_notification_field_data' => [
       'left_field' => 'id',

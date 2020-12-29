@@ -25,16 +25,10 @@ class DomNotificationsReadUid extends Boolean {
   /**
    * {@inheritDoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, AccountProxyInterface $current_user) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->current_user = $current_user;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($configuration, $plugin_id, $plugin_definition, $container->get('current_user'));
+    $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
+    $instance->current_user = $container->get('current_user');
+    return $instance;
   }
 
   /**

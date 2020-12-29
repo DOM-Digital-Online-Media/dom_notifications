@@ -61,9 +61,17 @@ class DomNotificationsChannel extends Plugin {
    * Predefined message for notifications, will be set to all notifications of
    * the channel if set.
    *
+   * @var \Drupal\Core\Annotation\Translation
+   */
+  public $default_message;
+
+  /**
+   * Predefined link for notifications, will be set to all notifications of
+   * the channel if set.
+   *
    * @var string
    */
-  public $default_message = '';
+  public $default_link;
 
   /**
    * Allow users to mute the channel notifications. User will still see them.
@@ -71,5 +79,12 @@ class DomNotificationsChannel extends Plugin {
    * @var boolean
    */
   public $allow_mute = TRUE;
+
+  /**
+   * Whether use related entity uri as path for notifications on the channel.
+   *
+   * @var boolean
+   */
+  public $use_entity_uri = FALSE;
 
 }

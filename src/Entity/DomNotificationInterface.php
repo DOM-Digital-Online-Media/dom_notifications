@@ -6,6 +6,7 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityPublishedInterface;
+use Drupal\user\EntityOwnerInterface;
 use Psr\Http\Message\UriInterface;
 use Drupal\user\UserInterface;
 
@@ -14,7 +15,7 @@ use Drupal\user\UserInterface;
  *
  * @ingroup dom_notifications
  */
-interface DomNotificationInterface extends ContentEntityInterface, EntityChangedInterface, EntityPublishedInterface {
+interface DomNotificationInterface extends ContentEntityInterface, EntityChangedInterface, EntityPublishedInterface, EntityOwnerInterface {
 
   /**
    * Sets notification message for the notification.
@@ -33,30 +34,40 @@ interface DomNotificationInterface extends ContentEntityInterface, EntityChanged
   public function getMessage();
 
   /**
-   * Sets redirect entity for notification i.e. comment which has been created etc.
+   * Returns redirect Uri for the notification based on it's channel and settings.
+   *
+   * @return \Psr\Http\Message\UriInterface
+   */
+  public function retrieveRedirectUri();
+
+  /**
+   * Sets related entity for notification i.e. comment which has been created etc.
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   Entity object, NULL to make empty.
    *
    * @return \Drupal\dom_notifications\Entity\DomNotificationInterface
    */
-  public function setRedirectEntity(EntityInterface $entity);
+  public function setRelatedEntity(EntityInterface $entity = NULL);
 
   /**
-   * Returns redirect entity for notification if it exists.
+   * Returns related entity for notification if it exists.
    *
    * @return \Drupal\Core\Entity\EntityInterface|null
    */
-  public function getRedirectEntity();
+  public function getRelatedEntity();
 
   /**
    * Sets redirect Uri for notification if it's related to page, not particular
    * entity.
    *
-   * @param \Psr\Http\Message\UriInterface $uri
+   * @param \Psr\Http\Message\UriInterface|string $uri
+   *   Uri to set, either string or object implementing UriInterface.
+   *   Set NULL to unset.
    *
    * @return \Drupal\dom_notifications\Entity\DomNotificationInterface
    */
-  public function setRedirectUri(UriInterface $uri);
+  public function setRedirectUri($uri = NULL);
 
   /**
    * Returns redirect Uri for notification if it exists.
@@ -64,13 +75,6 @@ interface DomNotificationInterface extends ContentEntityInterface, EntityChanged
    * @return \Psr\Http\Message\UriInterface|null
    */
   public function getRedirectUri();
-
-  /**
-   * Returns redirect Uri for the notification based on it's channel and settings.
-   *
-   * @return \Psr\Http\Message\UriInterface
-   */
-  public function retrieveRedirectUri();
 
   /**
    * Return whether notification is read by certain user.

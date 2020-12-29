@@ -130,14 +130,8 @@ class DomNotificationStackingSettingsForm extends ConfigFormBase {
               'message',
             ]), $this->t('Please enter a message for the stacked notification on the channel.'));
           }
-          if (empty($settings['uri'])) {
-            $form_state->setErrorByName(implode('][', [
-              'channels',
-              $id,
-              'uri',
-            ]), $this->t('Please enter a URL for the stacked notification on the channel.'));
-          }
-          elseif (!UrlHelper::isValid($settings['uri']) && !UrlHelper::isValid($settings['uri'], TRUE)) {
+          if (!empty($settings['uri']) && !UrlHelper::isValid($settings['uri'])
+        && !UrlHelper::isValid($settings['uri'], TRUE)) {
             $form_state->setErrorByName(implode('][', [
               'channels',
               $id,

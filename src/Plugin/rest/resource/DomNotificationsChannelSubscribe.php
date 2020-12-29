@@ -83,7 +83,7 @@ class DomNotificationsChannelSubscribe extends ResourceBase {
     if (!isset($data['channel'])) {
       return new ResourceResponse([
         'message' => $this->t('Required parameter \'channel\' is missing.'),
-      ], 400);
+      ], 422);
     }
     if (!$this->notificationsService->getChannelManager()->hasDefinition($data['channel'])) {
       return new ResourceResponse([
@@ -95,7 +95,7 @@ class DomNotificationsChannelSubscribe extends ResourceBase {
     if (!isset($data['status']) || !is_bool($data['status'])) {
       return new ResourceResponse([
         'message' => $this->t('Required parameter \'status\' is missing or not boolean.'),
-      ], 400);
+      ], 422);
     }
 
     /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */

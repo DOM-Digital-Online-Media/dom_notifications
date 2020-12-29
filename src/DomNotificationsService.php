@@ -4,6 +4,7 @@ namespace Drupal\dom_notifications;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Database\Driver\mysql\Connection;
 use Drupal\Core\Session\AccountProxyInterface;
@@ -87,32 +88,51 @@ class DomNotificationsService implements DomNotificationsServiceInterface {
   /**
    * {@inheritDoc}
    */
-  public function addNotification($channel_id, $message = '', array $fields = [], UserInterface $user = NULL) {
-    $account = $user ?? $this->currentUser;
-    /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */
-    $channel = $this->getChannelManager()->createInstance($channel_id);
-    $default_message = $channel->getDefaultMessage();
+  public function addNotification($channel_id, array $fields = [], $message = '', UserInterface $recipient = NULL, UserInterface $sender = NULL) {
+    $recipient_user = $user ?? $this->currentUser;
+    $sender_user = $sender;
 
-    // Message is required for notification so check if it's not empty.
-    if (empty($message) && empty($default_message)) {
-      throw new DomNotificationsException($this->t('Notification should have a message either default from channel or specific.'));
-    }
+    // Fetch various redirect options.
+    $related_entity = $fields['related_entity'] ?? NULL;
+    $redirect_uri = $fields['redirect_uri'] ?? NULL;
+    unset($fields['related_entity'], $fields['redirect_uri']);
 
     /** @var \Drupal\dom_notifications\Entity\DomNotificationInterface $notification */
     $notification = $this->entityTypeManager->getStorage('dom_notification')->create([
+      'message' => !empty($message) ? $message : NULL,
       'status' => 1,
-      'channel_id' => $channel->getComputedChannelID($account),
-      'message' => !empty($message) ? $message : $default_message,
     ] + $fields);
 
-    // Check whether notification leads somewhere.
-    $uri = $notification->retrieveRedirectUri();
-    if (!$uri) {
-      throw new DomNotificationsException($this->t('Notification should have related entity to lead to or specific URL.'));
+    // Prepare configs array with related recipient and entity if possible.
+    $configs = ['recipient' => $recipient_user];
+    if ($related_entity instanceof EntityInterface) {
+      $notification->setRelatedEntity($related_entity);
+      $configs['entity'] = $related_entity;
+
+      if (!$sender_user) {
+        $sender_user = $configs['entity']->getOwner();
+      }
+    }
+    if ($redirect_uri) {
+      $notification->setRedirectUri($redirect_uri);
     }
 
-    $notification->save();
-    return $notification;
+    /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */
+    $channel = $this->getChannelManager()->createInstance($channel_id, $configs);
+    $computed_channel_id = $channel->getComputedChannelID();
+
+    // If computed channel ID is empty than user is sufficient for the channel.
+    if (empty($computed_channel_id)) {
+      return NULL;
+    }
+    $notification->setChannelID($computed_channel_id);
+
+    // Fallback to current user if no user passed and no related entity available.
+    $notification->setOwner($sender_user ?? $this->currentUser);
+
+    // Allow channel provide own onSave logic and abort notification creation
+    // if needed.
+    return $channel->onNotificationSave($notification);
   }
 
   /**

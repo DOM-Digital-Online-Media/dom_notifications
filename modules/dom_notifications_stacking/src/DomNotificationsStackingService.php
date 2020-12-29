@@ -14,21 +14,23 @@ class DomNotificationsStackingService extends DomNotificationsService {
   /**
    * {@inheritDoc}
    */
-  public function addNotification($channel_id, $message = '', array $fields = [], UserInterface $user = NULL) {
-    $account = $user ?? $this->currentUser;
+  public function addNotification($channel_id, array $fields = [], $message = '', UserInterface $recipient = NULL, UserInterface $sender = NULL) {
+    $recipient_user = $recipient ?? $this->currentUser;
     $new_message = $message;
     $new_fields = $fields;
+    $new_fields['stacked'] = FALSE;
 
     /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */
-    $channel = $this->getChannelManager()->createInstance($channel_id);
+    $channel = $this->getChannelManager()->createInstance($channel_id, $fields + ['recipient' => $recipient_user]);
+    $computed_channel_id = $channel->getComputedChannelID();
 
     $stacking = $this->configFactory->getEditable('dom_notifications_stacking.settings')->get('channels');
     $stacking = array_combine(array_column($stacking, 'channel_plugin'), $stacking);
     $enabled = isset($stacking[$channel_id]['stack'])
       ? $stacking[$channel_id]['stack'] > 1
       : FALSE;
-    $produce = $enabled
-      ? $this->produceStackNotification($channel->getComputedChannelID($account), $stacking[$channel_id]['stack'])
+    $produce = $enabled && !empty($computed_channel_id)
+      ? $this->produceStackNotification($computed_channel_id, $stacking[$channel_id]['stack'])
       : FALSE;
 
     if ($enabled) {
@@ -37,17 +39,17 @@ class DomNotificationsStackingService extends DomNotificationsService {
       }
       else {
         // Update the message and Uri using stack configs.
+        $new_fields['stacked'] = TRUE;
         $new_message = new FormattableMarkup($stacking[$channel_id]['message'], [
           '@count' => $stacking[$channel_id]['stack'],
         ]);
+        $new_fields['redirect_uri'] = !empty($stacking[$channel_id]['uri']) ? $stacking[$channel_id]['uri'] : $new_fields['redirect_uri'];
 
-        $new_fields['redirect_uri'] = $stacking[$channel_id]['uri'];
-        unset($new_fields['redirect_entity_type'], $new_fields['redirect_entity_id']);
       }
 
     }
 
-    return parent::addNotification($channel_id, $new_message, $new_fields, $user);
+    return parent::addNotification($channel_id, $new_fields, $new_message, $recipient, $sender);
   }
 
   /**

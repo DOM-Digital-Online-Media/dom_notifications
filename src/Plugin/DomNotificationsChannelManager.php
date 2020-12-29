@@ -58,14 +58,9 @@ class DomNotificationsChannelManager extends DefaultPluginManager implements Dom
    * {@inheritDoc}
    */
   public function createInstance($plugin_id, array $configuration = []) {
-    if (!isset($this->instances[$plugin_id])) {
-      $definition = $this->getDefinition($plugin_id);
-      $class = DefaultFactory::getPluginClass($plugin_id, $definition, '\Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface');
-
-      $this->instances[$plugin_id] = $class::create(\Drupal::getContainer(), $configuration, $plugin_id, $definition);
-    }
-
-    return $this->instances[$plugin_id];
+    $definition = $this->getDefinition($plugin_id);
+    $class = DefaultFactory::getPluginClass($plugin_id, $definition, '\Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface');
+    return $class::create(\Drupal::getContainer(), $configuration, $plugin_id, $definition);
   }
 
   /**
@@ -75,20 +70,23 @@ class DomNotificationsChannelManager extends DefaultPluginManager implements Dom
     if (mb_strpos($channel_id, ':') === FALSE && $this->hasDefinition($channel_id)) {
       return $channel_id;
     }
+    $base_ids = [];
     $specific_channels = $this->getSpecificChannels();
-    $specific_channels = array_column($specific_channels, 'base_id', 'id');
+    foreach ($specific_channels as $channel) {
+      $base_ids[$channel->getChannelBaseID()] = $channel->id();
+    }
 
     // Retrieve channel without last part and see if it matches base channel ids.
     do {
       $base_id = implode(':', array_slice(explode(':', $channel_id), 0, -1));
-    } while (!empty($base_id) && !in_array($base_id, $specific_channels));
+    } while (!empty($base_id) && !array_key_exists($base_id, $base_ids));
 
     // If we shrank base id to an empty string that means we have not found matching channel.
-    if (empty($base_id)) {
+    if (!array_key_exists($base_id, $base_ids)) {
       throw new PluginNotFoundException($channel_id, $this->t('Could not find notifications channel matching this specific channel ID.'));
     }
 
-    return array_search($base_id, $specific_channels);
+    return $base_ids[$base_id];
   }
 
   /**

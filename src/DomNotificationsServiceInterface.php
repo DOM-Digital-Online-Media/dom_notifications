@@ -10,21 +10,29 @@ use Drupal\user\UserInterface;
 interface DomNotificationsServiceInterface {
 
   /**
-   * Creates notification for given channel. Notification may not be returned
-   * depending on internal settings, so please check return value.
+   * Returns notification for given channel. Notification may not be returned
+   * depending on internal settings, so please check return value. You also would
+   * need to save entity yourself or adjust notification
    *
    * @param string $channel_id
    *   Channel ID for notification i.e. plugin id of channel plugin.
+   * @param array $fields
+   *   Associative array of notification fields and values to set, containing:
+   *     - related_entity: object implementing EntityInterface which is related
+   *       to an entity i.e. comment or vote etc.;
+   *     - redirect_uri: string uri to use static redirect path for notification;
+   *     - ... any Field API field;
    * @param string $message
    *   Notification message, can be omitted only if channel provides default.
-   * @param array $fields
-   *   Associative array of notification fields and values to set.
-   * @param \Drupal\user\UserInterface|NULL $user
+   * @param \Drupal\user\UserInterface|NULL $recipient
    *   User for which notification will be created. Defaults to current user.
+   * @param \Drupal\user\UserInterface|NULL $sender
+   *   User which initiated notification creation. Falls back to author of
+   *   related entity, then to current user.
    *
    * @return \Drupal\dom_notifications\Entity\DomNotificationInterface|null
    */
-  public function addNotification($channel_id, $message = '', array $fields = [], UserInterface $user = NULL);
+  public function addNotification($channel_id, array $fields = [], $message = '', UserInterface $recipient = NULL, UserInterface $sender = NULL);
 
   /**
    * Retrieve array of notifications for the user or for current user.
