@@ -119,7 +119,7 @@ class DomNotificationsService implements DomNotificationsServiceInterface {
 
     /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */
     $channel = $this->getChannelManager()->createInstance($channel_id, $configs);
-    $computed_channel_id = $channel->getComputedChannelID();
+    $computed_channel_id = $channel->getComputedChannelId();
 
     // If computed channel ID is empty than user is sufficient for the channel.
     if (empty($computed_channel_id)) {

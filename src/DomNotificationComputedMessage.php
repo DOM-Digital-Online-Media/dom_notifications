@@ -27,7 +27,8 @@ class DomNotificationComputedMessage extends FieldItemList {
       }
     }
 
-    $this->list[0] = $this->createItem(0, new TranslatableMarkup($entity->getMessage(), $replace));
+    $item = new TranslatableMarkup($entity->getMessage(), $replace);
+    $this->list[0] = $this->createItem(0, $item);
   }
 
 }

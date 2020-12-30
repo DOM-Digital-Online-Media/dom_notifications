@@ -13,9 +13,11 @@ use Drupal\Core\Field\BaseFieldDefinition;
 function dom_notifications_stacking_entity_base_field_info(\Drupal\Core\Entity\EntityTypeInterface $entity_type) {
   $fields = [];
   if ($entity_type->id() === 'dom_notification') {
-    $fields['stacked'] = BaseFieldDefinition::create('boolean')
-      ->setLabel(t('Is stacked'))
-      ->setDescription(t('Indicates if the notification is a stacked notification for number of events.'));
+    $fields['stack_size'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Stack size'))
+      ->setDescription(t('Indicates if the notification is a stacked notification for number of events.'))
+      ->setInitialValue(1)
+      ->setDefaultValue(1);
   }
   return $fields;
 }

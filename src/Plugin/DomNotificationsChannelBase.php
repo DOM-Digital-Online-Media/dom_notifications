@@ -10,6 +10,7 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\Query\Condition;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\dom_notifications\Entity\DomNotificationInterface;
@@ -59,15 +60,23 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
   protected $configuration;
 
   /**
+   * Module handler service.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
    * {@inheritDoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, DomNotificationsChannelManagerInterface $channel_manager, Connection $database, EntityTypeManagerInterface $entity_type_manager, CacheTagsInvalidatorInterface $invalidator, TranslationInterface $translation) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, DomNotificationsChannelManagerInterface $channel_manager, Connection $database, EntityTypeManagerInterface $entity_type_manager, CacheTagsInvalidatorInterface $invalidator, TranslationInterface $translation, ModuleHandlerInterface $module_handler) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->configuration = $configuration;
     $this->channelManager = $channel_manager;
     $this->database = $database;
     $this->entityTypeManager = $entity_type_manager;
     $this->invalidator = $invalidator;
+    $this->moduleHandler = $module_handler;
     $this->setStringTranslation($translation);
   }
 
@@ -83,7 +92,8 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
       $container->get('database'),
       $container->get('entity_type.manager'),
       $container->get('cache_tags.invalidator'),
-      $container->get('string_translation')
+      $container->get('string_translation'),
+      $container->get('module_handler')
     );
   }
 
@@ -174,7 +184,7 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
   /**
    * {@inheritDoc}
    */
-  public function getComputedChannelID(array $entities = []) {
+  public function getComputedChannelId(array $entities = []) {
     return $this->id();
   }
 
@@ -234,7 +244,7 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
         $user = $this->entityTypeManager->getStorage('user')->load($uid);
       }
 
-      if ($computed_channel_id = $this->getComputedChannelID(['user' => $user])) {
+      if ($computed_channel_id = $this->getComputedChannelId(['user' => $user])) {
         $query->values([
           $uid,
           $computed_channel_id,
@@ -372,12 +382,40 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
    * {@inheritDoc}
    */
   public function getChannelPlaceholderInfo() {
+    $count_info = $this->moduleHandler->moduleExists('dom_notifications_stacking')
+      ? $this->getStackedNotificationCountInfo()
+      : [];
     return [
       '@author' => [
         'name' => $this->t('Author name'),
         'callback' => [get_called_class(), 'getChannelReplaceAuthor'],
       ],
+    ] + $count_info;
+  }
+
+  /**
+   * Returns additional placeholder info if stacking is enabled.
+   *
+   * @return array
+   */
+  protected function getStackedNotificationCountInfo() {
+    return [
+      '@count' => [
+        'name' => $this->t('Messages count'),
+        'callback' => [get_called_class(), 'getChannelReplaceCountStacking'],
+      ],
     ];
+  }
+
+  /**
+   * Returns notification count for stacked notifications.
+   *
+   * @param \Drupal\dom_notifications\Entity\DomNotificationInterface $notification
+   *
+   * @return \Drupal\Component\Render\MarkupInterface|string
+   */
+  public static function getChannelReplaceCountStacking(DomNotificationInterface $notification) {
+    return $notification->getStackSize();
   }
 
   /**

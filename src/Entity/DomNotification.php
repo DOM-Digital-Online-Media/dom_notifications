@@ -321,6 +321,19 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   }
 
   /**
+   * {@inheritDoc}
+   */
+  public function getStackSize() {
+    $size = 1;
+    if ($this->hasField('stack_size')) {
+      if ($value = (int) $this->get('stack_size')->getString()) {
+        $size = $value;
+      }
+    }
+    return $size;
+  }
+
+  /**
    * Internal function to return given user or load from current user instead.
    *
    * @param \Drupal\user\UserInterface|null $user

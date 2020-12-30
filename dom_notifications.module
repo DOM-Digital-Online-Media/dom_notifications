@@ -5,6 +5,8 @@
  * Contains dom_notifications.module.
  */
 
+use Drupal\Core\Database\Query\Condition;
+
 /**
  * Implements hook_cron().
  */
@@ -26,20 +28,26 @@ function dom_notifications_cron() {
  * Implements hook_entity_update().
  */
 function dom_notifications_entity_update(Drupal\Core\Entity\EntityInterface $entity) {
-  $related_notifications = \Drupal::entityTypeManager()
+  $query = \Drupal::entityTypeManager()
     ->getStorage('dom_notification')
-    ->loadByProperties([
-      'related_entity_type' => $entity->getEntityTypeId(),
-      'related_entity_id' => $entity->id(),
-    ]);
+    ->getQuery();
 
+  // Fetch notifications related to the entity.
+  $related_condition = new Condition('AND');
+  $related_condition->condition('related_entity_type', $entity->getEntityTypeId());
+  $related_condition->condition('related_entity_id', $entity->id());
+
+  // Or notification created by an entity if entity is user.
+  $condition = new Condition('OR');
+  $condition->condition($related_condition);
+  if ($entity->getEntityTypeId() === 'user') {
+    $condition->condition('uid', $entity->id());
+  }
+
+  $related_notifications = $query->execute();
   if (empty($related_notifications)) {
     return;
   }
 
-  $tags = [];
-  foreach ($related_notifications as $notification) {
-    $tags = array_merge($tags, $notification->getCacheTags());
-  }
-  \Drupal\Core\Cache\Cache::invalidateTags($tags);
+  \Drupal::entityTypeManager()->getStorage('dom_notification')->resetCache($related_notifications);
 }

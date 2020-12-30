@@ -18,11 +18,11 @@ class DomNotificationsStackingService extends DomNotificationsService {
     $recipient_user = $recipient ?? $this->currentUser;
     $new_message = $message;
     $new_fields = $fields;
-    $new_fields['stacked'] = FALSE;
+    $new_fields['stack_size'] = 1;
 
     /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */
     $channel = $this->getChannelManager()->createInstance($channel_id, $fields + ['recipient' => $recipient_user]);
-    $computed_channel_id = $channel->getComputedChannelID();
+    $computed_channel_id = $channel->getComputedChannelId();
 
     $stacking = $this->configFactory->getEditable('dom_notifications_stacking.settings')->get('channels');
     $stacking = array_combine(array_column($stacking, 'channel_plugin'), $stacking);
@@ -39,11 +39,11 @@ class DomNotificationsStackingService extends DomNotificationsService {
       }
       else {
         // Update the message and Uri using stack configs.
-        $new_fields['stacked'] = TRUE;
-        $new_message = new FormattableMarkup($stacking[$channel_id]['message'], [
-          '@count' => $stacking[$channel_id]['stack'],
-        ]);
-        $new_fields['redirect_uri'] = !empty($stacking[$channel_id]['uri']) ? $stacking[$channel_id]['uri'] : $new_fields['redirect_uri'];
+        $new_fields['stack_size'] = $stacking[$channel_id]['stack'];
+        $new_message = $stacking[$channel_id]['message'];
+        $new_fields['redirect_uri'] = !empty($stacking[$channel_id]['uri'])
+          ? $stacking[$channel_id]['uri']
+          : $new_fields['redirect_uri'] ?? NULL;
 
       }
 

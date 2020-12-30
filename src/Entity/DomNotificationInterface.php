@@ -77,6 +77,15 @@ interface DomNotificationInterface extends ContentEntityInterface, EntityChanged
   public function getRedirectUri();
 
   /**
+   * Returns stack size for notification i.e. if notification is related to
+   * number of events this returns the number. If notification is not stacked
+   * or stacking submodule disabled then return 1.
+   *
+   * @return integer
+   */
+  public function getStackSize();
+
+  /**
    * Return whether notification is read by certain user.
    *
    * @param \Drupal\user\UserInterface|null $user

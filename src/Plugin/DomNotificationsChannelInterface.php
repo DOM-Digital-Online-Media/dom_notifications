@@ -86,7 +86,7 @@ interface DomNotificationsChannelInterface extends PluginInspectionInterface, Co
    *   Returns null if user is not sufficient for the channel, i.e. does not
    *   have some field value required for the channel etc.
    */
-  public function getComputedChannelID(array $entities = []);
+  public function getComputedChannelId(array $entities = []);
 
   /**
    * Returns whether channel uses related entity uri as notification uri.

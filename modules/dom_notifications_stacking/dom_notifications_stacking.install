@@ -5,6 +5,8 @@
  * Enable/disable/update/schema related hooks for the module.
  */
 
+use Drupal\Core\Field\BaseFieldDefinition;
+
 /**
  * Implements hook_schema().
  */
@@ -60,4 +62,24 @@ function dom_notifications_stacking_install() {
     ->getEditable('dom_notifications_stacking.settings')
     ->set('channels', $channels_configs)
     ->save();
+}
+
+/**
+ * Update field for stack indication on a notification.
+ */
+function dom_notifications_stacking_update_8101(&$sandbox) {
+  $definition_manager = \Drupal::entityDefinitionUpdateManager();
+
+  // Remove boolean field.
+  if ($old_field = $definition_manager->getFieldStorageDefinition('stacked', 'dom_notification')) {
+    $definition_manager->uninstallFieldStorageDefinition($old_field);
+  }
+
+  // Install new field for a stack size.
+  $stack_size = BaseFieldDefinition::create('integer')
+    ->setLabel(t('Stack size'))
+    ->setDescription(t('Indicates if the notification is a stacked notification for number of events.'))
+    ->setInitialValue(1)
+    ->setDefaultValue(1);
+  $definition_manager->installFieldStorageDefinition('stack_size', 'dom_notification', 'dom_notifications_stacking', $stack_size);
 }
