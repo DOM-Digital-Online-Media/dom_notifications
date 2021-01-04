@@ -57,7 +57,7 @@ function dom_notifications_entity_update(Drupal\Core\Entity\EntityInterface $ent
  * Implements hook_query_TAG_alter().
  */
 function dom_notifications_query_dom_notification_access_alter(Drupal\Core\Database\Query\AlterableInterface $query) {
-  /** @var \Drupal\views\ViewExecutable $view */
+  // Get the account for which notifications list is built.
   if (!$account = $query->getMetaData('account')) {
     $account = \Drupal::currentUser();
   }
@@ -81,7 +81,7 @@ function dom_notifications_query_dom_notification_access_alter(Drupal\Core\Datab
   $data_table_alias = $table_names[$data_table] ?? NULL;
 
   // If no base table in the query, that means select is not for notifications.
-  if (!$base_table_alias) {
+  if (!$base_table_alias && !$data_table_alias) {
     throw new DomNotificationsException(t('Query tagged for dom_notification entity access, but there is no base table.'));
   }
 
@@ -89,12 +89,16 @@ function dom_notifications_query_dom_notification_access_alter(Drupal\Core\Datab
     $data_table_alias = $query->addJoin('INNER', $data_table, 'dndt', "dndt.id = {$base_table_alias}.id");
   }
 
-  // Add join to table that tracks user presence in notification channel.
-  $alias = $query->addJoin('INNER', 'dom_notifications_user_channels', 'dnuc', "dnuc.channel_id = {$data_table_alias}.channel_id");
+  // Add join to table that tracks user presence in notification channel if
+  // it's not joined already. If it is joined manually then conditions have
+  // already been enforced.
+  if (!array_key_exists('dom_notifications_user_channels', $table_names)) {
+    $alias = $query->addJoin('INNER', 'dom_notifications_user_channels', 'dnuc', "dnuc.channel_id = {$data_table_alias}.channel_id");
 
-  // Add condition to take only notifications from channels user subscribed to.
-  $query->condition($alias . '.uid', $account->id());
+    // Add condition to take only notifications from channels user subscribed to.
+    $query->condition($alias . '.uid', $account->id());
 
-  // Hide notifications initiated by the user, so he won't see own.
-  $query->condition($data_table_alias . '.uid', $account->id(), '<>');
+    // Hide notifications initiated by the user, so he won't see own.
+    $query->condition($data_table_alias . '.uid', $account->id(), '<>');
+  }
 }
