@@ -62,7 +62,7 @@ class DomNotificationsSettingsForm extends FormBase {
 
     $form['token'] = [
       '#type' => 'select',
-      '#title' => $this->t('Number of months to keep notifications for'),
+      '#title' => $this->t('FCM token field'),
       '#options' => $options,
       '#default_value' => !empty($settings['token']) ? $settings['token'] : NULL,
       '#required' => TRUE,
