@@ -89,7 +89,7 @@ class DomNotificationsService implements DomNotificationsServiceInterface {
    * {@inheritDoc}
    */
   public function addNotification($channel_id, array $fields = [], $message = '', UserInterface $recipient = NULL, UserInterface $sender = NULL) {
-    $recipient_user = $user ?? $this->currentUser;
+    $recipient_user = $recipient ?? $this->currentUser;
     $sender_user = $sender;
 
     // Fetch various redirect options.
