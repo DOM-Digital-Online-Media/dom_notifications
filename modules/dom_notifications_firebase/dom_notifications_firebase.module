@@ -1,0 +1,90 @@
+<?php
+
+/**
+ * @file
+ * Contains dom_notifications_firebase.module.
+ */
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+
+/**
+ * Implements hook_ENTITY_TYPE_presave().
+ */
+function dom_notifications_firebase_dom_notification_presave(EntityInterface $entity) {
+  /** @var \Drupal\dom_notifications\Entity\DomNotification $entity */
+  $operations = [];
+  foreach ($entity->getRecipients() as $recipient) {
+    $operations[] = [
+      'dom_notifications_firebase_send_notification',
+      [$recipient, $entity],
+    ];
+  }
+
+  $batch = [
+    'operations' => $operations,
+  ];
+
+  // Set & run batch in background.
+  batch_set($batch);
+  $batch = &batch_get();
+  $batch['progressive'] = FALSE;
+  batch_process();
+}
+
+/**
+ * Sent notification to the recipient.
+ */
+function dom_notifications_firebase_send_notification($recipient, $entity) {
+  /** @var \Drupal\dom_notifications\Entity\DomNotification $entity */
+  $related_entity = $entity->getRelatedEntity();
+  $action = $entity->getRedirectUri();
+
+  try {
+    $messageService = \Drupal::service('firebase.message');
+    $messageService->setRecipients($recipient);
+
+    $messageService->setNotification([
+      'title' => $related_entity ? $related_entity->label() : '',
+      'body' => $entity->getMessage(),
+      'badge' => 1,
+      'icon' => 'optional-icon',
+      'sound' => 'optional-sound',
+      'click_action' => '.MainActivity',
+    ]);
+
+    $time = \Drupal::time()->getRequestTime();
+    $date = \Drupal::service('date.formatter');
+
+    $messageService->setData([
+      'url' => !empty($action) ? $action : '{}',
+      'score' => '3x1',
+      'date' => $date->format($time, '', 'Y-m-d'),
+      'optional' => t('Data is used to send silent pushes. Otherwise, optional.'),
+    ]);
+
+    $messageService->setOptions(['priority' => 'normal']);
+    $messageService->send();
+  }
+  catch (\Exception $e) {
+    watchdog_exception('dom_notifications_firebase', $e);
+  }
+}
+
+/**
+ * Implements hook_entity_bundle_field_info().
+ */
+function dom_notifications_firebase_entity_bundle_field_info(EntityTypeInterface $entity_type, $bundle, array $base_field_definitions) {
+  $fields = [];
+
+  if ('dom_notification' == $entity_type->id()) {
+    $fields['recipients'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Recipients'))
+      ->setComputed(TRUE)
+      ->setCardinality(-1)
+      ->setCustomStorage(TRUE);
+  }
+
+  return $fields;
+}

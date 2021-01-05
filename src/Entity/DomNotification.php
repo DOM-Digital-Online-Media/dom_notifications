@@ -349,5 +349,22 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
     $account = \Drupal::entityTypeManager()->getStorage('user')->load(\Drupal::currentUser()->id());
     return $account;
   }
+  
+  /**
+   * Get a list of all recipients.
+   *
+   * @return array
+   */
+  public function getRecipients() {
+    $recipients = [];
+
+    if ($this->hasField('recipients')) {
+      foreach ($this->get('recipients')->getValue() as $user) {
+        $recipients[$user['target_id']] = $user['target_id'];
+      }
+    }
+
+    return $recipients;
+  }
 
 }
