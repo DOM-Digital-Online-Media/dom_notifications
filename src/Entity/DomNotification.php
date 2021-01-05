@@ -211,6 +211,19 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   /**
    * {@inheritDoc}
    */
+  public function getRecipients() {
+    return \Drupal::database()
+      ->select('dom_notifications_user_channels', 'dnuc')
+      ->fields('dnuc', ['uid'])
+      ->condition('channel_id', $this->getChannelID())
+      ->condition('notify', 1)
+      ->execute()
+      ->fetchCol();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public function getRedirectUri() {
     return !empty($this->redirect_options->redirect_uri)
       ? new Uri($this->redirect_options->redirect_uri)
@@ -348,23 +361,6 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
     /** @var UserInterface $account */
     $account = \Drupal::entityTypeManager()->getStorage('user')->load(\Drupal::currentUser()->id());
     return $account;
-  }
-  
-  /**
-   * Get a list of all recipients.
-   *
-   * @return array
-   */
-  public function getRecipients() {
-    $recipients = [];
-
-    if ($this->hasField('recipients')) {
-      foreach ($this->get('recipients')->getValue() as $user) {
-        $recipients[$user['target_id']] = $user['target_id'];
-      }
-    }
-
-    return $recipients;
   }
 
 }

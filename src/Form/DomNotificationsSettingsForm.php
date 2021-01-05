@@ -19,11 +19,19 @@ class DomNotificationsSettingsForm extends FormBase {
   protected $notifications_service;
 
   /**
+   * The entity field manager.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
+   */
+  protected $field_manager;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
     $instance->notifications_service = $container->get('dom_notifications.service');
+    $instance->field_manager = $container->get('entity_field.manager');
     return $instance;
   }
 
@@ -45,6 +53,21 @@ class DomNotificationsSettingsForm extends FormBase {
       '#default_value' => $settings['keep_notification_months'],
       '#required' => TRUE,
     ];
+
+    $options = [];
+    $field_map = $this->field_manager->getFieldDefinitions('user', 'user');
+    foreach ($field_map as $name => $item) {
+      $options[$name] = $item->getLabel();
+    }
+
+    $form['token'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Number of months to keep notifications for'),
+      '#options' => $options,
+      '#default_value' => !empty($settings['token']) ? $settings['token'] : NULL,
+      '#required' => TRUE,
+    ];
+
     $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Submit'),
