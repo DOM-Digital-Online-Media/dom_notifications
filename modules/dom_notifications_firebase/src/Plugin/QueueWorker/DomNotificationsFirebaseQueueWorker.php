@@ -5,10 +5,12 @@ namespace Drupal\dom_notifications_firebase\Plugin\QueueWorker;
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\firebase\Service\FirebaseMessageService;
 use Drupal\user\Entity\User;
 
 /**
- * Process a queue.
+ * Send notification to the user via firebase service.
  *
  * @QueueWorker(
  *   id = "dom_notifications_firebase_queue_worker",
@@ -19,6 +21,20 @@ use Drupal\user\Entity\User;
 class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements ContainerFactoryPluginInterface {
 
   /**
+   * Provides config.factory service.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $config;
+
+  /**
+   * Provides firebase.message service.
+   *
+   * @var \Drupal\firebase\Service\FirebaseMessageService
+   */
+  protected $firebase;
+
+  /**
    * Constructs a new class instance.
    *
    * @param array $configuration
@@ -27,9 +43,15 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
    *   The plugin_id for the plugin instance.
    * @param mixed $plugin_definition
    *   The plugin implementation definition.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
+   *   Defines the interface for a configuration object factory.
+   * @param \Drupal\firebase\Service\FirebaseMessageService $firebase
+   *   Service for pushing message to mobile devices using Firebase.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, ConfigFactoryInterface $config, FirebaseMessageService $firebase) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
+    $this->config = $config;
+    $this->firebase = $firebase;
   }
 
   /**
@@ -39,7 +61,9 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
     return new static(
       $configuration,
       $plugin_id,
-      $plugin_definition
+      $plugin_definition,
+      $container->get('config.factory'),
+      $container->get('firebase.message')
     );
   }
 
@@ -48,7 +72,7 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
    */
   public function processItem($data) {
     $user = User::load($data['recipient']);
-    $settings = \Drupal::config('dom_notifications.settings')->get('token');
+    $settings = $this->config->get('dom_notifications.settings')->get('token');
     if (!$user || !$settings) {
       return;
     }
@@ -63,7 +87,7 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
     $action = $entity->retrieveRedirectUri()->__toString();
 
     try {
-      $messageService = \Drupal::service('firebase.message');
+      $messageService = $this->firebase;
       $messageService->setRecipients($token);
 
       $messageService->setNotification([
