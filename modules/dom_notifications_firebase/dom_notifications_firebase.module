@@ -21,8 +21,12 @@ function dom_notifications_firebase_dom_notification_presave(EntityInterface $en
   $queue = \Drupal::queue('dom_notifications_firebase_queue_worker');
   $queue->createQueue();
   $data = ['entity' => $entity];
-  foreach ($entity->getRecipients() as $recipient) {
-    $data['recipient'] = $recipient;
+
+  $configs = \Drupal::config('dom_notifications.settings')->get('user_count');
+  $chunks = array_chunk($entity->getRecipients(), $configs ?? 100);
+
+  foreach ($chunks as $chunk) {
+    $data['recipients'] = $chunk;
     $queue->createItem($data);
   }
 }

@@ -68,6 +68,13 @@ class DomNotificationsSettingsForm extends FormBase {
       '#required' => TRUE,
     ];
 
+    $form['user_count'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Count of users'),
+      '#default_value' => !empty($settings['user_count']) ? $settings['user_count'] : 100,
+      '#required' => TRUE,
+    ];
+
     $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Submit'),

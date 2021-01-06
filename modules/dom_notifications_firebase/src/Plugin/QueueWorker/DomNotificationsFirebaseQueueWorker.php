@@ -83,14 +83,8 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
    * {@inheritdoc}
    */
   public function processItem($data) {
-    $user = User::load($data['recipient']);
     $settings = $this->config->get('dom_notifications.settings')->get('token');
-    if (!$user || !$settings) {
-      return;
-    }
-
-    $token = $user->hasField($settings) ? $user->get($settings)->getString() : '';
-    if (!$token) {
+    if (!$settings) {
       return;
     }
 
@@ -98,30 +92,37 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
     $entity = $data['entity'];
     $action = $entity->retrieveRedirectUri()->__toString();
 
-    try {
-      $messageService = $this->firebase;
-      $messageService->setRecipients($token);
+    foreach (User::loadMultiple($data['recipients']) as $user) {
+      $token = $user->hasField($settings) ? $user->get($settings)->getString() : '';
+      if (!$token) {
+        continue;
+      }
 
-      $messageService->setNotification([
-        'body' => $entity->getMessage(),
-        'badge' => 1,
-        'icon' => 'optional-icon',
-        'sound' => 'optional-sound',
-        'click_action' => '.MainActivity',
-      ]);
+      try {
+        $messageService = $this->firebase;
+        $messageService->setRecipients($token);
 
-      $messageService->setData([
-        'url' => !empty($action) ? $action : '{}',
-        'score' => '3x1',
-        'date' => $this->date->format($entity->getCreatedTime(), '', 'Y-m-d'),
-        'optional' => t('Data is used to send silent pushes. Otherwise, optional.'),
-      ]);
+        $messageService->setNotification([
+          'body' => $entity->getMessage(),
+          'badge' => 1,
+          'icon' => 'optional-icon',
+          'sound' => 'optional-sound',
+          'click_action' => '.MainActivity',
+        ]);
 
-      $messageService->setOptions(['priority' => 'normal']);
-      $messageService->send();
-    }
-    catch (\Exception $e) {
-      watchdog_exception('dom_notifications_firebase', $e);
+        $messageService->setData([
+          'url' => !empty($action) ? $action : '{}',
+          'score' => '3x1',
+          'date' => $this->date->format($entity->getCreatedTime(), '', 'Y-m-d'),
+          'optional' => t('Data is used to send silent pushes. Otherwise, optional.'),
+        ]);
+
+        $messageService->setOptions(['priority' => 'normal']);
+        $messageService->send();
+      }
+      catch (\Exception $e) {
+        watchdog_exception('dom_notifications_firebase', $e);
+      }
     }
   }
 
