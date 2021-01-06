@@ -12,10 +12,9 @@ use Drupal\Core\Entity\EntityInterface;
  */
 function dom_notifications_firebase_dom_notification_presave(EntityInterface $entity) {
   /** @var \Drupal\dom_notifications\Entity\DomNotificationInterface $entity */
-  $original = !empty($entity->original) && $entity->original->isPublished() && $entity->isPublished();
-  $new = empty($entity->original) && $entity->isPublished() && $entity->isNew();
-
-  if ($original || !$new) {
+  $original_published = !empty($entity->original) && $entity->original->isPublished() && $entity->isPublished();
+  $original_unpublished = !empty($entity->original) && !$entity->original->isPublished() && !$entity->isPublished();
+  if ($original_published || $original_unpublished || !$entity->isPublished()) {
     return;
   }
 
@@ -26,5 +25,4 @@ function dom_notifications_firebase_dom_notification_presave(EntityInterface $en
     $data['recipient'] = $recipient;
     $queue->createItem($data);
   }
-
 }

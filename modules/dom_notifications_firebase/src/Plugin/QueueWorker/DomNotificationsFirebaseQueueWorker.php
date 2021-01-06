@@ -7,6 +7,7 @@ use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\firebase\Service\FirebaseMessageService;
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\user\Entity\User;
 
 /**
@@ -35,6 +36,13 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
   protected $firebase;
 
   /**
+   * Provides date.formatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   */
+  protected $date;
+
+  /**
    * Constructs a new class instance.
    *
    * @param array $configuration
@@ -47,11 +55,14 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
    *   Defines the interface for a configuration object factory.
    * @param \Drupal\firebase\Service\FirebaseMessageService $firebase
    *   Service for pushing message to mobile devices using Firebase.
+   * @param \Drupal\Core\Datetime\DateFormatterInterface $date
+   *   Provides an interface defining a date formatter.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, ConfigFactoryInterface $config, FirebaseMessageService $firebase) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, ConfigFactoryInterface $config, FirebaseMessageService $firebase, DateFormatterInterface $date) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->config = $config;
     $this->firebase = $firebase;
+    $this->date = $date;
   }
 
   /**
@@ -63,7 +74,8 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
       $plugin_id,
       $plugin_definition,
       $container->get('config.factory'),
-      $container->get('firebase.message')
+      $container->get('firebase.message'),
+      $container->get('date.formatter')
     );
   }
 
@@ -98,13 +110,10 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
         'click_action' => '.MainActivity',
       ]);
 
-      $time = $entity->getCreatedTime();
-      $date = \Drupal::service('date.formatter');
-
       $messageService->setData([
         'url' => !empty($action) ? $action : '{}',
         'score' => '3x1',
-        'date' => $date->format($time, '', 'Y-m-d'),
+        'date' => $this->date->format($entity->getCreatedTime(), '', 'Y-m-d'),
         'optional' => t('Data is used to send silent pushes. Otherwise, optional.'),
       ]);
 
