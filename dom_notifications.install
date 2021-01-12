@@ -33,7 +33,7 @@ function dom_notifications_schema() {
           'not null' => TRUE,
         ],
         'notify' => [
-          'description' => 'Boolean indicating Whether or not user should be notified about the notification for the channel.',
+          'description' => 'Boolean indicating whether or not user should be notified about the notification for the channel.',
           'type' => 'int',
           'unsigned' => TRUE,
           'not null' => TRUE,

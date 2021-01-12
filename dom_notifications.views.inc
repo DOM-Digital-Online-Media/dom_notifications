@@ -13,6 +13,14 @@ function dom_notifications_views_data() {
   $data = [];
 
   // Notification author filter.
+  $data['dom_notification_field_data']['channel_label'] = [
+    'title' => t('Channel label'),
+    'help' => t('Human-readable name for the channel.'),
+    'real field' => 'id',
+    'field' => [
+      'id' => 'dom_notifications_channel_label',
+    ],
+  ];
   $data['dom_notification_field_data']['not_author'] = [
     'title' => t('Not author'),
     'help' => t('Allows to filter out notifications user is author of.'),

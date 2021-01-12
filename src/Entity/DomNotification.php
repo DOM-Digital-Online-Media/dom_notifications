@@ -216,7 +216,6 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
       ->select('dom_notifications_user_channels', 'dnuc')
       ->fields('dnuc', ['uid'])
       ->condition('channel_id', $this->getChannelID())
-      ->condition('notify', 1)
       ->execute()
       ->fetchCol();
   }

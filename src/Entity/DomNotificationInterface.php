@@ -58,7 +58,7 @@ interface DomNotificationInterface extends ContentEntityInterface, EntityChanged
   public function getRelatedEntity();
 
   /**
-   * Get a list of all recipients.
+   * Get a list of all recipients for the notification.
    *
    * @return array
    */

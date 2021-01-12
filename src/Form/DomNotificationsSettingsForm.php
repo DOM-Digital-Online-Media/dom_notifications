@@ -16,22 +16,30 @@ class DomNotificationsSettingsForm extends FormBase {
    *
    * @var \Drupal\dom_notifications\DomNotificationsServiceInterface
    */
-  protected $notifications_service;
+  protected $notificationsService;
 
   /**
-   * The entity field manager.
+   * Entity field manager service.
    *
    * @var \Drupal\Core\Entity\EntityFieldManagerInterface
    */
-  protected $field_manager;
+  protected $fieldManager;
+
+  /**
+   * Module handler service.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
-    $instance->notifications_service = $container->get('dom_notifications.service');
-    $instance->field_manager = $container->get('entity_field.manager');
+    $instance->notificationsService = $container->get('dom_notifications.service');
+    $instance->fieldManager = $container->get('entity_field.manager');
+    $instance->moduleHandler = $container->get('module_handler');
     return $instance;
   }
 
@@ -46,7 +54,7 @@ class DomNotificationsSettingsForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $settings = $this->notifications_service->getNotificationsSettings();
+    $settings = $this->notificationsService->getNotificationsSettings();
     $form['keep_notification_months'] = [
       '#type' => 'number',
       '#title' => $this->t('Number of months to keep notifications for'),
@@ -55,24 +63,31 @@ class DomNotificationsSettingsForm extends FormBase {
     ];
 
     $options = [];
-    $field_map = $this->field_manager->getFieldDefinitions('user', 'user');
+    $field_map = $this->fieldManager->getFieldDefinitions('user', 'user');
     foreach ($field_map as $name => $item) {
       $options[$name] = $item->getLabel();
     }
 
-    $form['token'] = [
-      '#type' => 'select',
-      '#title' => $this->t('FCM token field'),
-      '#options' => $options,
-      '#default_value' => !empty($settings['token']) ? $settings['token'] : NULL,
-      '#required' => TRUE,
+    $form['firebase'] = [
+      '#type' => 'details',
+      '#open' => TRUE,
+      '#title' => $this->t('Firebase integration settings'),
+      '#access' => $this->moduleHandler->moduleExists('dom_notifications_firebase'),
     ];
 
-    $form['user_count'] = [
+    $form['firebase']['token'] = [
+      '#type' => 'select',
+      '#title' => $this->t('FCM token field'),
+      '#description' => $this->t('Choose a user field where his FCM token is saved. '),
+      '#options' => $options,
+      '#default_value' => $settings['token'],
+    ];
+
+    $form['firebase']['user_count'] = [
       '#type' => 'number',
       '#title' => $this->t('Count of users'),
-      '#default_value' => !empty($settings['user_count']) ? $settings['user_count'] : 100,
-      '#required' => TRUE,
+      '#description' => $this->t('Notifications are sent to firebase by chunks and this value controls the size of that chunk.'),
+      '#default_value' => $settings['user_count'],
     ];
 
     $form['submit'] = [
@@ -87,11 +102,11 @@ class DomNotificationsSettingsForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $settings = $this->notifications_service->getNotificationsSettings();
+    $settings = $this->notificationsService->getNotificationsSettings();
     foreach ($form_state->getValues() as $key => $value) {
       $settings[$key] = $value;
     }
-    $this->notifications_service->setNotificationsSettings($settings);
+    $this->notificationsService->setNotificationsSettings($settings);
   }
 
 }

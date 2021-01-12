@@ -156,6 +156,7 @@ interface DomNotificationsChannelInterface extends PluginInspectionInterface, Co
    *   User ID.
    *
    * @return boolean
+   *   TRUE if user wants to receive alerts from the channel.
    */
   public function getAlertsStatus($uid);
 
