@@ -1,0 +1,8 @@
+name: 'Dom Notifications Firebase'
+type: module
+description: 'Implementation of firebase notifications.'
+core: 8.x
+package: 'Dom'
+dependencies:
+  - dom_notifications:dom_notifications
+  - firebase:firebase

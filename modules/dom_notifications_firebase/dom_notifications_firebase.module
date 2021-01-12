@@ -1,0 +1,32 @@
+<?php
+
+/**
+ * @file
+ * Contains dom_notifications_firebase.module.
+ */
+
+use Drupal\Core\Entity\EntityInterface;
+
+/**
+ * Implements hook_ENTITY_TYPE_presave().
+ */
+function dom_notifications_firebase_dom_notification_presave(EntityInterface $entity) {
+  /** @var \Drupal\dom_notifications\Entity\DomNotificationInterface $entity */
+  $original_published = !empty($entity->original) && $entity->original->isPublished() && $entity->isPublished();
+  $original_unpublished = !empty($entity->original) && !$entity->original->isPublished() && !$entity->isPublished();
+  if ($original_published || $original_unpublished || !$entity->isPublished()) {
+    return;
+  }
+
+  $queue = \Drupal::queue('dom_notifications_firebase_queue_worker');
+  $queue->createQueue();
+  $data = ['entity' => $entity];
+
+  $configs = \Drupal::config('dom_notifications.settings')->get('user_count');
+  $chunks = array_chunk($entity->getRecipients(), $configs ?? 100);
+
+  foreach ($chunks as $chunk) {
+    $data['recipients'] = $chunk;
+    $queue->createItem($data);
+  }
+}

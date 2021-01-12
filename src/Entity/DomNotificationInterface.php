@@ -58,6 +58,13 @@ interface DomNotificationInterface extends ContentEntityInterface, EntityChanged
   public function getRelatedEntity();
 
   /**
+   * Get a list of all recipients.
+   *
+   * @return array
+   */
+  public function getRecipients();
+
+  /**
    * Sets redirect Uri for notification if it's related to page, not particular
    * entity.
    *

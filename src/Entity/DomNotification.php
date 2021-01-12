@@ -211,6 +211,19 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   /**
    * {@inheritDoc}
    */
+  public function getRecipients() {
+    return \Drupal::database()
+      ->select('dom_notifications_user_channels', 'dnuc')
+      ->fields('dnuc', ['uid'])
+      ->condition('channel_id', $this->getChannelID())
+      ->condition('notify', 1)
+      ->execute()
+      ->fetchCol();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public function getRedirectUri() {
     return !empty($this->redirect_options->redirect_uri)
       ? new Uri($this->redirect_options->redirect_uri)
