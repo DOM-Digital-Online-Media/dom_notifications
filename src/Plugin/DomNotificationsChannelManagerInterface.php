@@ -10,6 +10,22 @@ use Drupal\Component\Plugin\PluginManagerInterface;
 interface DomNotificationsChannelManagerInterface extends PluginManagerInterface {
 
   /**
+   * Creates a pre-configured instance of a plugin.
+   *
+   * @param string $plugin_id
+   *   The ID of the plugin being instantiated.
+   * @param array $configuration
+   *   An array of configuration relevant to the plugin instance.
+   *
+   * @return \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface
+   *   A fully configured plugin instance.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   *   If the instance cannot be created, such as if the ID is invalid.
+   */
+  public function createInstance($plugin_id, array $configuration = []);
+
+  /**
    * Returns channel plugin ID so the plugin can be determined from specific
    * channel ID instance.
    * For example, returns article:[uid] for article:2 if the channel is only for

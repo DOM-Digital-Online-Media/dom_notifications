@@ -87,4 +87,11 @@ class DomNotificationsChannel extends Plugin {
    */
   public $use_entity_uri = FALSE;
 
+  /**
+   * TRUE if channel is limited to one user notifications instead of several.
+   *
+   * @var bool
+   */
+  public $individual = FALSE;
+
 }

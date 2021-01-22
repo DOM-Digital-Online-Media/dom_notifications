@@ -42,6 +42,21 @@ interface DomNotificationsChannelInterface extends PluginInspectionInterface, Co
   public function isMuteAllowed();
 
   /**
+   * Returns whether channel has different computed and plugin id,
+   * i.e. channel only for one user or for user with specific field value.
+   *
+   * @return boolean
+   */
+  public function isComputed();
+
+  /**
+   * Returns whether the channel is limited to notifications for one user.
+   *
+   * @return boolean
+   */
+  public function isIndividual();
+
+  /**
    * Returns human-readable label for the channel.
    *
    * @return string
@@ -208,5 +223,22 @@ interface DomNotificationsChannelInterface extends PluginInspectionInterface, Co
    *   as placeholder value. Name should be user friendly.
    */
   public function getChannelPlaceholderInfo();
+
+  /**
+   * Return related entity for stacking functionality. By default it returns
+   * null so stacking works for simple channels, however there might be a case
+   * when some channels want stack to be related to channel and entity.
+   *
+   * For example, if we have a comment notification then developers may want
+   * notifications to be stacked for content that's been commented on and not
+   * stack just all comments into one pile.
+   *
+   * @param \Drupal\dom_notifications\Entity\DomNotificationInterface $notification
+   *   Notification entity to return stack related entity for.
+   *
+   * @return \Drupal\Core\Entity\EntityInterface|null
+   *   Entity for which stack should be related or NULL.
+   */
+  public function getStackRelatedEntity(DomNotificationInterface $notification);
 
 }

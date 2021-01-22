@@ -5,6 +5,7 @@
  * Enable/disable/update/schema related hooks for the module.
  */
 
+use Drupal\Core\Database\Database;
 use Drupal\Core\Field\BaseFieldDefinition;
 
 /**
@@ -34,8 +35,21 @@ function dom_notifications_stacking_schema() {
           'not null' => TRUE,
           'default' => 0,
         ],
+        'related_entity_type' => [
+          'description' => 'Type of an entity for which this stack was generated, null for no related entity.',
+          'type' => 'varchar',
+          'length' => 255,
+          'default' => '',
+          'not null' => TRUE,
+        ],
+        'related_entity_id' => [
+          'description' => 'ID of an entity for which this stack was generated, null for no related entity.',
+          'type' => 'int',
+          'default' => 0,
+          'not null' => TRUE,
+        ],
       ],
-      'primary key' => ['channel_id'],
+      'primary key' => ['channel_id', 'related_entity_type', 'related_entity_id'],
     ],
   ];
 }
@@ -82,4 +96,26 @@ function dom_notifications_stacking_update_8101(&$sandbox) {
     ->setInitialValue(1)
     ->setDefaultValue(1);
   $definition_manager->installFieldStorageDefinition('stack_size', 'dom_notification', 'dom_notifications_stacking', $stack_size);
+}
+
+/**
+ * Add additional fields to stacking table for related entity and adjust index.
+ */
+function dom_notifications_stacking_update_8102(&$sandbox) {
+  $schema = Database::getConnection()->schema();
+  $schema->addField('dom_notifications_stacking', 'related_entity_type', [
+    'description' => 'Type of an entity for which this stack was generated, null for no related entity.',
+    'type' => 'varchar',
+    'length' => 255,
+    'default' => '',
+    'not null' => TRUE,
+  ]);
+  $schema->addField('dom_notifications_stacking', 'related_entity_id', [
+    'description' => 'ID of an entity for which this stack was generated, null for no related entity.',
+    'type' => 'int',
+    'default' => 0,
+    'not null' => TRUE,
+  ]);
+  $schema->dropPrimaryKey('dom_notifications_stacking');
+  $schema->addPrimaryKey('dom_notifications_stacking', ['channel_id', 'related_entity_type', 'related_entity_id']);
 }

@@ -2,6 +2,7 @@
 
 namespace Drupal\dom_notifications_stacking\Form;
 
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Form\ConfigFormBase;
@@ -67,6 +68,11 @@ class DomNotificationStackingSettingsForm extends ConfigFormBase {
       '#tree' => TRUE,
     ];
     foreach ($channels as $channel) {
+      // Stacking is available only to individual channels.
+      if (!$channel->isIndividual()) {
+        continue;
+      }
+
       $stack = $config_channels[$channel->id()]['stack'] ?? 1;
       $enabled = $stack > 1;
       $enabled_states = [
@@ -92,7 +98,7 @@ class DomNotificationStackingSettingsForm extends ConfigFormBase {
         'stack' => [
           '#type' => 'number',
           '#title' => $this->t('Stack size'),
-          '#description' => $this->t('The number of notifications to stack until notification is produced.'),
+          '#description' => $this->t('The number of notifications to produced until stacked ones.'),
           '#default_value' => $stack === 1 ? 2 : $stack,
           '#min' => 2,
           '#states' => $enabled_states,
@@ -110,7 +116,24 @@ class DomNotificationStackingSettingsForm extends ConfigFormBase {
           '#default_value' => $config_channels[$channel->id()]['uri'] ?? '',
           '#states' => $enabled_states,
         ],
+        'help' => [
+          '#theme' => 'item_list',
+          '#title' => $this->t('Available placeholders') . ':',
+        ],
       ];
+      if ($info = $channel->getChannelPlaceholderInfo()) {
+        foreach ($info as $placeholder => $data) {
+          $form['channels'][$channel->id()]['help']['#items'][$placeholder] = [
+            '#markup' => new FormattableMarkup('@placeholder: @label', [
+              '@placeholder' => $placeholder,
+              '@label' => $data['name'],
+            ]),
+          ];
+        }
+      }
+      else {
+        unset($form['channels'][$channel->id()]['help']);
+      }
     }
 
     return parent::buildForm($form, $form_state);

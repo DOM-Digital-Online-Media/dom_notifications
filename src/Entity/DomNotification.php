@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityPublishedTrait;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\dom_notifications\Event\DomNotificationsReadEvent;
 use Drupal\user\EntityOwnerTrait;
 use Psr\Http\Message\UriInterface;
 use Drupal\user\UserInterface;
@@ -321,6 +322,13 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
       ->execute();
     $this->isReadStatus[$account->id()] = TRUE;
     Cache::invalidateTags($this->getCacheTags());
+
+    // Dispatch read event, so other modules may introduce their logic.
+    $event = new DomNotificationsReadEvent($this, $account);
+
+    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher */
+    $dispatcher = \Drupal::service('event_dispatcher');
+    $dispatcher->dispatch(DomNotificationsReadEvent::EVENT_NAME, $event);
 
     return TRUE;
   }

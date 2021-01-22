@@ -47,7 +47,7 @@ class DomNotificationsChannelManager extends DefaultPluginManager implements Dom
    */
   public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler, Connection $database, LoggerChannelInterface $logger) {
     parent::__construct('Plugin/DomNotificationsChannel', $namespaces, $module_handler, 'Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface', 'Drupal\dom_notifications\Annotation\DomNotificationsChannel');
-    $this->alterInfo('dom_notifications_dom_notifications_channel_info');
+    $this->alterInfo('dom_notifications_channel_info');
     $this->setCacheBackend($cache_backend, 'dom_notifications_dom_notifications_channel_plugins');
 
     $this->database = $database;
@@ -71,8 +71,11 @@ class DomNotificationsChannelManager extends DefaultPluginManager implements Dom
       return $channel_id;
     }
     $base_ids = [];
-    $specific_channels = $this->getSpecificChannels();
-    foreach ($specific_channels as $channel) {
+    $channels = $this->getAllChannels();
+    foreach ($channels as $channel) {
+      if (!$channel->isComputed()) {
+        continue;
+      }
       $base_ids[$channel->getChannelBaseID()] = $channel->id();
     }
 

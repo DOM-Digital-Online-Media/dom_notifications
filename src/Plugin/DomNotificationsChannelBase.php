@@ -133,6 +133,21 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
   /**
    * {@inheritDoc}
    */
+  public function isComputed() {
+    return $this->id() !== $this->getChannelBaseID();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function isIndividual() {
+    $definition = $this->getPluginDefinition();
+    return $definition['individual'] ?? FALSE;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public function getLabel() {
     $definition = $this->getPluginDefinition();
     return $definition['label']->__toString();
@@ -174,7 +189,7 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
     $return = [];
     $channels = $this->channelManager->getSpecificChannels();
     foreach ($channels as $channel) {
-      if ($channel->getChannelBaseID() === $this->id()) {
+      if ($channel->getBaseChannel()->id() === $this->id()) {
         $return[] = $channel;
       }
     }
@@ -231,7 +246,7 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
     $users_to_add = array_diff($users, $this->getSubscribedUsers());
 
     // Determine whether we need user object to get computed channel ID.
-    $is_computed = $this->id() !== $this->getChannelBaseID();
+    $is_computed = $this->isComputed();
 
     $query = $this->database->insert('dom_notifications_user_channels');
     $query->fields(['uid', 'channel_id', 'channel_plugin_id', 'notify']);
@@ -344,8 +359,17 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
 
     // Clear up all the related notifications.
     if (!empty($notification_ids)) {
-      $notification_storage =$this->entityTypeManager->getStorage('dom_notification');
-      $notification_storage->delete($notification_storage->loadMultiple($notification_ids));
+      $notification_storage = $this->entityTypeManager->getStorage('dom_notification');
+      foreach (array_chunk($notification_ids, 1000) as $ids) {
+        $notification_storage->delete($notification_storage->loadMultiple($ids));
+      }
+    }
+
+    if ($this->moduleHandler->moduleExists('dom_notifications_stacking')) {
+      $this->database
+        ->delete('dom_notifications_stacking')
+        ->condition('channel_plugin_id', $this->id())
+        ->execute();
     }
 
     // Clear user subscriptions.
@@ -427,6 +451,13 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
    */
   public static function getChannelReplaceAuthor(DomNotificationInterface $notification) {
     return $notification->getOwner()->getDisplayName();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getStackRelatedEntity(DomNotificationInterface $notification) {
+    return NULL;
   }
 
   /**

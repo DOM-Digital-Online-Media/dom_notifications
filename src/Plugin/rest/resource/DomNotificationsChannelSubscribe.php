@@ -98,7 +98,6 @@ class DomNotificationsChannelSubscribe extends ResourceBase {
       ], 422);
     }
 
-    /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */
     $channel = $this->notificationsService->getChannelManager()->createInstance($data['channel']);
     if ($data['status']) {
       $channel->subscribeUsers([$this->currentUser->id()]);

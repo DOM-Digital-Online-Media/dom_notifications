@@ -6,7 +6,7 @@ use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Database\Driver\mysql\Connection;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -30,7 +30,7 @@ class DomNotificationsService implements DomNotificationsServiceInterface {
   /**
    * Database service.
    *
-   * @var \Drupal\Core\Database\Driver\mysql\Connection
+   * @var \Drupal\Core\Database\Connection
    */
   protected $database;
 
@@ -66,7 +66,7 @@ class DomNotificationsService implements DomNotificationsServiceInterface {
    * Constructs a new DomNotificationsService object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   * @param \Drupal\Core\Database\Driver\mysql\Connection $database
+   * @param \Drupal\Core\Database\Connection $database
    * @param \Drupal\Core\Session\AccountProxyInterface $current_user
    * @param \Drupal\dom_notifications\Plugin\DomNotificationsChannelManagerInterface $channel_manager
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
@@ -92,7 +92,7 @@ class DomNotificationsService implements DomNotificationsServiceInterface {
     $recipient_user = $recipient ?? $this->currentUser;
     $sender_user = $sender;
 
-    // Fetch various redirect options.
+    // Fetch related entity and redirect uri.
     $related_entity = $fields['related_entity'] ?? NULL;
     $redirect_uri = $fields['redirect_uri'] ?? NULL;
     unset($fields['related_entity'], $fields['redirect_uri']);
@@ -117,11 +117,10 @@ class DomNotificationsService implements DomNotificationsServiceInterface {
       $notification->setRedirectUri($redirect_uri);
     }
 
-    /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */
     $channel = $this->getChannelManager()->createInstance($channel_id, $configs);
     $computed_channel_id = $channel->getComputedChannelId();
 
-    // If computed channel ID is empty than user is sufficient for the channel.
+    // If computed channel ID is empty than user is not sufficient for channel.
     if (empty($computed_channel_id)) {
       return NULL;
     }

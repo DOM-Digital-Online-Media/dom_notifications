@@ -1,6 +1,6 @@
 name: 'Dom Notifications Stacking'
 type: module
-description: 'Implementation of stacking function so notification will be created only for number of events instead of one.'
+description: 'Implementation of stacking function for notifications from individual channels.'
 core: 8.x
 package: 'Dom'
 configure: dom_notifications_stacking.settings_form

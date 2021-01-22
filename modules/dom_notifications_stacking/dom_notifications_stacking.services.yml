@@ -1,0 +1,9 @@
+services:
+  dom_notifications_stacking.event_subscriber:
+    class: Drupal\dom_notifications_stacking\EventSubscriber\DomNotificationsStackingSubscriber
+    arguments: ['@dom_notifications_stacking.service']
+    tags:
+      - { name: event_subscriber }
+  dom_notifications_stacking.service:
+    class: Drupal\dom_notifications_stacking\DomNotificationsStackingService
+    arguments: ['@database']

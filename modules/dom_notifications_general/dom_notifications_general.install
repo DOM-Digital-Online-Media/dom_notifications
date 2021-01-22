@@ -11,7 +11,6 @@
 function dom_notifications_general_install() {
   /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelManagerInterface $channel_manager */
   $channel_manager = \Drupal::service('plugin.manager.dom_notifications_channel');
-  /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */
   $channel = $channel_manager->createInstance(DOM_NOTIFICATIONS_GENERAL_CHANNEL);
 
   // Retrieve all active users to subscribe to General channel. We don't need
@@ -33,7 +32,6 @@ function dom_notifications_general_install() {
 function dom_notifications_general_uninstall() {
   /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelManagerInterface $channel_manager */
   $channel_manager = \Drupal::service('plugin.manager.dom_notifications_channel');
-  /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */
   $channel = $channel_manager->createInstance(DOM_NOTIFICATIONS_GENERAL_CHANNEL);
   $channel->delete();
 }

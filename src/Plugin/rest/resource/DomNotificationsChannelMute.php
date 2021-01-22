@@ -70,7 +70,6 @@ class DomNotificationsChannelMute extends ResourceBase {
       ], 422);
     }
 
-    /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */
     $channel = $this->notificationsService->getChannelManager()->createInstance($data['channel']);
     if (!$channel->isMuteAllowed()) {
       return new ResourceResponse([

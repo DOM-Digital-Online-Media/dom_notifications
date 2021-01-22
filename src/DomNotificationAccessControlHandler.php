@@ -62,7 +62,6 @@ class DomNotificationAccessControlHandler extends EntityAccessControlHandler imp
     // then computed ID will contain [uid] in the notification and will match
     // computed ID taken from user if node belonged to the user.
     $plugin_id = $entity->getChannel()->id();
-    /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */
     $channel = $this->notificationsService->getChannelManager()->createInstance($plugin_id);
     $entities = ['recipient' => $this->entityTypeManager->getStorage('user')->load($account->id())];
     if ($channel->getComputedChannelId($entities) !== $entity->getChannelID()) {

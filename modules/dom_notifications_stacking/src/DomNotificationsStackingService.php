@@ -2,96 +2,86 @@
 
 namespace Drupal\dom_notifications_stacking;
 
-use Drupal\Component\Render\FormattableMarkup;
-use Drupal\dom_notifications\DomNotificationsService;
-use Drupal\user\UserInterface;
+use Drupal\Core\Database\Connection;
+use Drupal\dom_notifications\Entity\DomNotificationInterface;
 
 /**
  * Altered DomNotificationsService to alter default system.
  */
-class DomNotificationsStackingService extends DomNotificationsService {
+class DomNotificationsStackingService implements DomNotificationsStackingServiceInterface {
+
+  /**
+   * Database service.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $database;
+
+  /**
+   * DomNotificationsStackingService constructor.
+   *
+   * @param \Drupal\Core\Database\Connection $database
+   */
+  public function __construct(Connection $database) {
+    $this->database = $database;
+  }
 
   /**
    * {@inheritDoc}
    */
-  public function addNotification($channel_id, array $fields = [], $message = '', UserInterface $recipient = NULL, UserInterface $sender = NULL) {
-    $recipient_user = $recipient ?? $this->currentUser;
-    $new_message = $message;
-    $new_fields = $fields;
-    $new_fields['stack_size'] = 1;
-
-    /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelInterface $channel */
-    $channel = $this->getChannelManager()->createInstance($channel_id, $fields + ['recipient' => $recipient_user]);
-    $computed_channel_id = $channel->getComputedChannelId();
-
-    $stacking = $this->configFactory->getEditable('dom_notifications_stacking.settings')->get('channels');
-    $stacking = array_combine(array_column($stacking, 'channel_plugin'), $stacking);
-    $enabled = isset($stacking[$channel_id]['stack'])
-      ? $stacking[$channel_id]['stack'] > 1
-      : FALSE;
-    $produce = $enabled && !empty($computed_channel_id)
-      ? $this->produceStackNotification($computed_channel_id, $stacking[$channel_id]['stack'])
-      : FALSE;
-
-    if ($enabled) {
-      if (!$produce) {
-        return NULL;
-      }
-      else {
-        // Update the message and Uri using stack configs.
-        $new_fields['stack_size'] = $stacking[$channel_id]['stack'];
-        $new_message = $stacking[$channel_id]['message'];
-        $new_fields['redirect_uri'] = !empty($stacking[$channel_id]['uri'])
-          ? $stacking[$channel_id]['uri']
-          : $new_fields['redirect_uri'] ?? NULL;
-
-      }
-
-    }
-
-    return parent::addNotification($channel_id, $new_fields, $new_message, $recipient, $sender);
+  public function getCurrentStackSize(DomNotificationInterface $notification) {
+    $query = $this->getStackingTableQueryForNotification($notification);
+    return (int) $query->execute()->fetchField();
   }
 
   /**
-   * Internal function to check whether we should produce stack notification.
-   * Note: this function if for internal use because it manages DB data.
-   *
-   * @param string $channel_id
-   *   Computed channel id where all placeholders replaced.
-   * @param integer $stack_size
-   *   Stack size that should be reached.
-   *
-   * @return boolean
-   *   TRUE if notification should be sent.
+   * {@inheritDoc}
    */
-  private function produceStackNotification($channel_id, $stack_size) {
-    $plugin_id = $this->getChannelManager()->getPluginIDBySpecificChannel($channel_id);
-    $count = $this->database->select('dom_notifications_stacking', 'dns')
-      ->fields('dns', ['count'])
-      ->condition('dns.channel_id', $channel_id)
-      ->execute()
-      ->fetchField();
+  public function setCurrentStackSize(DomNotificationInterface $notification, $stack) {
+    $entity = $notification->getChannel()->getStackRelatedEntity($notification);
+    $entity_type = $entity ? $entity->getEntityTypeId() : '';
+    $entity_id = $entity ? $entity->id() : 0;
 
-    // Increase notification count or set initial.
-    $count = $count ? $count + 1 : 1;
-    if ($count === (int) $stack_size) {
+    // Check if we have a record in database already.
+    $query = $this->getStackingTableQueryForNotification($notification);
+    if ($query->countQuery()->execute()->fetchField() > 0) {
       $this->database->update('dom_notifications_stacking')
-        ->fields(['count' => 0])
-        ->condition('channel_id', $channel_id)
+        ->fields(['count' => $stack])
+        ->condition('channel_id', $notification->getChannelID())
+        ->condition('related_entity_type', $entity_type)
+        ->condition('related_entity_id', $entity_id)
         ->execute();
-      return TRUE;
     }
     else {
-      $this->database->upsert('dom_notifications_stacking')
+      $this->database->insert('dom_notifications_stacking')
         ->fields([
-          'channel_plugin_id' => $plugin_id,
-          'channel_id' => $channel_id,
-          'count' => $count,
+          'channel_plugin_id' => $notification->getChannel()->id(),
+          'channel_id' => $notification->getChannelID(),
+          'count' => $stack,
+          'related_entity_type' => $entity_type,
+          'related_entity_id' => $entity_id,
         ])
-        ->key('channel_id')
         ->execute();
-      return FALSE;
     }
+  }
+
+  /**
+   * Returns query to stacking table for notification.
+   *
+   * @param \Drupal\dom_notifications\Entity\DomNotificationInterface $notification
+   *   Notification to build stacking query for.
+   *
+   * @return \Drupal\Core\Database\Query\SelectInterface
+   *   Select query.
+   */
+  private function getStackingTableQueryForNotification(DomNotificationInterface $notification) {
+    $entity = $notification->getChannel()->getStackRelatedEntity($notification);
+    $query = $this->database->select('dom_notifications_stacking', 'dns');
+    $query->fields('dns', ['count']);
+    $query->condition('dns.channel_id', $notification->getChannelID());
+    $query->condition('dns.related_entity_type', $entity ? $entity->getEntityTypeId() : '');
+    $query->condition('dns.related_entity_id', $entity ? $entity->id() : 0);
+    return $query;
   }
 
 }
