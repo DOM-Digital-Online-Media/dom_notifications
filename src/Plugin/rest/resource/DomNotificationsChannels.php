@@ -60,6 +60,8 @@ class DomNotificationsChannels extends ResourceBase {
           'label' => $channel->getLabel(),
           'allow_mute' => $channel->isMuteAllowed(),
           'base' => $channel->isBase(),
+          'subscribed' => $channel->isSubscribed($this->currentUser->id()),
+          'notify' => $channel->getAlertsStatus($this->currentUser->id()),
         ];
       }
 
