@@ -65,7 +65,10 @@ class DomNotificationsChannels extends ResourceBase {
         ];
       }
 
-      return new ResourceResponse($result, 200);
+      $responce = new ResourceResponse($result, 200);
+      $responce->addCacheableDependency($this->currentUser);
+
+      return $responce;
     }
 
 }

@@ -298,14 +298,13 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
    * {@inheritDoc}
    */
   public function getAlertsStatus($uid) {
-    $notify = (bool) $this->database
+    return (bool) $this->database
       ->select('dom_notifications_user_channels', 'dnuc')
       ->fields('dnuc', ['notify'])
       ->condition('uid', $uid)
       ->condition('channel_plugin_id', $this->id())
       ->execute()
       ->fetchField();
-    return $this->isBase() ? $notify : $notify && $this->getBaseChannel()->getAlertsStatus($uid);
 
   }
 
