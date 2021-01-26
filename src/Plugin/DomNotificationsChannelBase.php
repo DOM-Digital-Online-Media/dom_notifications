@@ -463,16 +463,11 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
    * Helper function to invalidate entity cache for notification on the channel.
    */
   private function invalidateNotificationCaches() {
-    // Fetch notification ids for the channel.
-    $query = $this->database->select('dom_notification_field_data', 'dnfd');
-    $query->addJoin('INNER', 'dom_notifications_user_channels', 'dnuc', 'dnuc.channel_id = dnfd.channel_id');
-    $query->fields('dnfd', ['id']);
-    $query->condition('dnuc.channel_plugin_id', $this->id());
-    $notification_ids = $query->distinct()->execute()->fetchCol();
-
-    $this->invalidator->invalidateTags(array_map(function ($id) {
-      return 'dom_notification:' . $id;
-    }, $notification_ids));
+    $tags = ['dom_notifications:channel:' . $this->id()];
+    foreach ($this->getSpecificChannels() as $channel) {
+      $tags[] = 'dom_notifications:channel:' . $channel->id();
+    }
+    $this->invalidator->invalidateTags($tags);
   }
 
   /**

@@ -354,6 +354,17 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   }
 
   /**
+   * {@inheritDoc}
+   */
+  public function getCacheTags() {
+    $tags = [];
+    if ($channel = $this->getChannel()) {
+      $tags[] = 'dom_notifications:channel:' . $channel->id();
+    }
+    return Cache::mergeTags(parent::getCacheTags(), $tags);
+  }
+
+  /**
    * Internal function to return given user or load from current user instead.
    *
    * @param \Drupal\user\UserInterface|null $user
