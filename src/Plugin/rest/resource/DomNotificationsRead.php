@@ -13,8 +13,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   id = "dom_notifications_read",
  *   label = @Translation("Dom Notifications mark read"),
  *   uri_paths = {
- *     "canonical" = "/api/dom-notifications",
- *     "create" = "/api/dom-notifications",
+ *     "canonical" = "/api/dom-notifications-read",
+ *     "create" = "/api/dom-notifications-read",
  *   }
  * )
  */

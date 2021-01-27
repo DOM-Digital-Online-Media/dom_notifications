@@ -54,7 +54,7 @@ class DomNotificationsChannelSubscribe extends ResourceBase {
    * @throws \Symfony\Component\HttpKernel\Exception\HttpException
    *   Throws exception expected.
    */
-  public function get() {
+  public function post() {
     $result = [];
 
     $channels = $this->notificationsService->fetchUserChannels();
@@ -79,7 +79,7 @@ class DomNotificationsChannelSubscribe extends ResourceBase {
    *
    * @return \Drupal\rest\ResourceResponse
    */
-  public function post($data) {
+  public function put($data) {
     if (!isset($data['channel'])) {
       return new ResourceResponse([
         'message' => $this->t('Required parameter \'channel\' is missing.'),

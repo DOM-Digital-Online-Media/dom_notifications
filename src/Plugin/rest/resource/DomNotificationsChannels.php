@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   id = "dom_notifications_channels",
  *   label = @Translation("Dom Notifications channels"),
  *   uri_paths = {
- *     "canonical" = "/api/dom-notifications/channels",
+ *     "create" = "/api/dom-notifications/channels",
  *   }
  * )
  */
@@ -45,12 +45,12 @@ class DomNotificationsChannels extends ResourceBase {
   }
 
     /**
-     * Responds to GET requests.
+     * Responds to POST requests.
      *
      * @return \Drupal\rest\ResourceResponse
      *   The HTTP response object.
      */
-    public function get() {
+    public function post() {
       $result = [];
       $channels = $this->notificationsService->getChannelManager()->getAllChannels();
 
