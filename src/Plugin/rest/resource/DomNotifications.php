@@ -48,7 +48,7 @@ class DomNotifications extends ResourceBase {
 
     // Since view responds to GET request we move post data to query params.
     $request = $this->requestStack->getCurrentRequest();
-    $request->query->replace($data);
+    $request->query->replace(is_array($data) ? $data : []);
 
     return RestExport::buildResponse('dom_user_notifications', 'rest_get');
   }
