@@ -213,6 +213,7 @@ class DomNotificationsService implements DomNotificationsServiceInterface {
     $ids = $storage
       ->getQuery()
       ->condition('created', $oldest_allowed, '<')
+      ->addTag('dom_notification_omit_access')
       ->execute();
 
     if ($notifications = $storage->loadMultiple($ids)) {

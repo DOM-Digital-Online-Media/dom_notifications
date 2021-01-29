@@ -63,7 +63,9 @@ function dom_notifications_query_dom_notification_access_alter(Drupal\Core\Datab
   }
 
   // User with admin notification are allowed to see all the notifications.
-  if ($account->hasPermission('administer dom notifications')) {
+  // Also we allow requests from cron to receive all notifications for clean up.
+  if ($account->hasPermission('administer dom notifications')
+|| $query->hasTag('dom_notification_omit_access')) {
     return;
   }
 
