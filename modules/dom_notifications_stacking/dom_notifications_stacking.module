@@ -33,7 +33,7 @@ function dom_notifications_stacking_module_implements_alter(&$implementations, $
       $group = $implementations['dom_notifications_stacking'];
       unset($implementations['dom_notifications_stacking']);
       $implementations = [
-        'dom_notifications_stacking' => $group
+        'dom_notifications_stacking' => $group,
       ] + $implementations;
       break;
   }
@@ -70,6 +70,21 @@ function dom_notifications_stacking_dom_notification_presave(EntityInterface $en
       $entity->setMessage($stacking[$channel_id]['message']);
       if (!empty($stacking[$channel_id]['uri'])) {
         $entity->setRedirectUri($stacking[$channel_id]['uri']);
+      }
+
+      // If current stack exceeded stack size, we need to remove the previous
+      // stacked notification.
+      if ($current_stack > $stacking[$channel_id]['stack']) {
+        $previous_stack = $current_stack - $stacking[$channel_id]['stack'];
+        $storage = \Drupal::entityTypeManager()->getStorage('dom_notification');
+        $previous = $storage->loadByProperties([
+          'channel_id' => $entity->getChannelID(),
+          'stack_size' => $previous_stack,
+        ]);
+        /** @var \Drupal\dom_notifications\Entity\DomNotificationInterface $notification */
+        foreach ($previous as $notification) {
+          $notification->setPublished(FALSE)->delete();
+        }
       }
     }
 
