@@ -93,6 +93,28 @@ interface DomNotificationInterface extends ContentEntityInterface, EntityChanged
   public function getStackSize();
 
   /**
+   * Return whether notification is seen by certain user.
+   *
+   * @param \Drupal\user\UserInterface|null $user
+   *   User to take notifications for. Current user if not supplied.
+   *
+   * @return boolean
+   */
+  public function isSeen(UserInterface $user = NULL);
+
+  /**
+   * Marks notification as seen for certain user.
+   *
+   * @param \Drupal\user\UserInterface|null $user
+   *   User that has seen the notification. Current user if not supplied.
+   *
+   * @return boolean
+   *   Returns TRUE if notification was marked as seen and FALSE if it was seen
+   *   already.
+   */
+  public function markSeen(UserInterface $user = NULL);
+
+  /**
    * Return whether notification is read by certain user.
    *
    * @param \Drupal\user\UserInterface|null $user

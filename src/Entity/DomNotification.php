@@ -12,6 +12,7 @@ use Drupal\Core\Entity\EntityPublishedTrait;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\dom_notifications\Event\DomNotificationsReadEvent;
+use Drupal\dom_notifications\Event\DomNotificationsSeenEvent;
 use Drupal\user\EntityOwnerTrait;
 use Psr\Http\Message\UriInterface;
 use Drupal\user\UserInterface;
@@ -65,6 +66,13 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   use EntityChangedTrait;
   use EntityPublishedTrait;
   use EntityOwnerTrait;
+
+  /**
+   * Internal array to store is seen status per user. Keys are user IDs.
+   *
+   * @var array
+   */
+  private $isSeenStatus = [];
 
   /**
    * Internal array to store is read status per user. Keys are user IDs.
@@ -158,6 +166,9 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
       $ids[] = $entity->id();
     }
     \Drupal::database()->delete('dom_notifications_read')
+      ->condition('nid', $ids, 'IN')
+      ->execute();
+    \Drupal::database()->delete('dom_notifications_seen')
       ->condition('nid', $ids, 'IN')
       ->execute();
   }
@@ -284,6 +295,54 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   public function setCreatedTime($timestamp) {
     $this->set('created', $timestamp);
     return $this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function isSeen(UserInterface $user = NULL) {
+    $account = $this->resolveEmptyUser($user);
+    if (!isset($this->isSeenStatus[$account->id()])) {
+      $count_seen = \Drupal::database()
+        ->select('dom_notifications_seen')
+        ->condition('uid', $account->id())
+        ->condition('nid', $this->id())
+        ->countQuery()->execute()->fetchField();
+
+      $this->isSeenStatus[$account->id()] = $count_seen === '1';
+    }
+
+    return $this->isSeenStatus[$account->id()];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function markSeen(UserInterface $user = NULL) {
+    $account = $this->resolveEmptyUser($user);
+    if ($this->isSeen($account)) {
+      return FALSE;
+    }
+
+    // Mark notification as seen in database and set internal status to true.
+    \Drupal::database()
+      ->insert('dom_notifications_seen')
+      ->fields([
+        'uid' => $account->id(),
+        'nid' => $this->id(),
+      ])
+      ->execute();
+    $this->isSeenStatus[$account->id()] = TRUE;
+    Cache::invalidateTags($this->getCacheTags());
+
+    // Dispatch seen event, so other modules may introduce their logic.
+    $event = new DomNotificationsSeenEvent($this, $account);
+
+    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher */
+    $dispatcher = \Drupal::service('event_dispatcher');
+    $dispatcher->dispatch(DomNotificationsSeenEvent::EVENT_NAME, $event);
+
+    return TRUE;
   }
 
   /**
