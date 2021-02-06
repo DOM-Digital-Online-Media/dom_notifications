@@ -32,6 +32,7 @@ There are several available endpoints to fetch user notification, change their s
 
 * `POST api/dom-notifications` (data: {'id' => {id}, 'uuid' => {uuid}, 'channel_id' => {channel_id}}) - returns list of notifications for currently logged in user, based on passed filters (ommit filters if all notifications should be returned);
 * `POST api/dom-notifications-read` (data: {'id' => {id}, 'uuid' => {uuid}, 'channel_id' => {channel_id}}) - marks notifications that match filters as read for logged in user;
+* `POST api/dom-notifications-seen` (data: {'id' => {id}, 'uuid' => {uuid}, 'channel_id' => {channel_id}}) - marks notifications that match filters as seen for logged in user;
 * `POST api/dom-notifications/channel-subscribe` - returns list of channels user is sunscribed to;
 * `PUT api/dom-notifications/channel-subscribe` (data: {'channel' => {channel_id}, 'status' => {true/false}}) - changes user subscription for the channel, if status true then user sunbscribes, false - unsubscribes;
 * `POST api/dom-notifications/channels` - returns list of all available notification channels and 2 properties `subscribed` and `notify` based on user duing request;

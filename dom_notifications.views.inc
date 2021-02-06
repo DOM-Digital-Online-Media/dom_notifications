@@ -74,6 +74,23 @@ function dom_notifications_views_data() {
     ],
   ];
 
+  // Add seen status table fields.
+  $data['dom_notifications_seen']['table']['group'] = t('Dom Notification');
+  $data['dom_notifications_seen']['table']['join'] = [
+    'dom_notification_field_data' => [
+      'left_field' => 'id',
+      'field' => 'nid',
+    ],
+  ];
+  $data['dom_notifications_seen']['is_seen'] = [
+    'title' => t('Is seen'),
+    'help' => t('Boolean field indicating that user has seen the notification.'),
+    'field' => [
+      'field' => 'uid',
+      'id' => 'dom_notifications_seen_uid',
+    ],
+  ];
+
   // Add read status table fields.
   $data['dom_notifications_read']['table']['group'] = t('Dom Notification');
   $data['dom_notifications_read']['table']['join'] = [

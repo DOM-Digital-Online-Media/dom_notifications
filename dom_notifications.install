@@ -5,6 +5,8 @@
  * Custom tables, updates and install/uninstall functionality.
  */
 
+use Drupal\Core\Database\Database;
+
 /**
  * Implements hook_schema().
  */
@@ -91,5 +93,86 @@ function dom_notifications_schema() {
         ],
       ],
     ],
+    'dom_notifications_seen' => [
+      'description' => 'Tracks users and notification that they already seen.',
+      'fields' => [
+        'uid' => [
+          'description' => 'User ID.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+        ],
+        'nid' => [
+          'description' => 'Dom Notification ID.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+        ],
+      ],
+      'primary key' => ['uid', 'nid'],
+      'foreign keys' => [
+        'user' => [
+          'table' => 'users',
+          'columns' => [
+            'uid' => 'uid',
+          ],
+        ],
+        'notification' => [
+          'table' => 'dom_notification',
+          'columns' => [
+            'nid' => 'id',
+          ],
+        ],
+      ],
+    ],
   ];
+}
+
+/**
+ * Install dom_notifications_seen table.
+ */
+function dom_notifications_update_8001() {
+  $table = 'dom_notifications_seen';
+  $schema = Database::getConnection()->schema();
+
+  if (!$schema->tableExists($table)) {
+    $spec = [
+      'description' => 'Tracks users and notification that they already seen.',
+      'fields' => [
+        'uid' => [
+          'description' => 'User ID.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+        ],
+        'nid' => [
+          'description' => 'Dom Notification ID.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+        ],
+      ],
+      'primary key' => ['uid', 'nid'],
+      'foreign keys' => [
+        'user' => [
+          'table' => 'users',
+          'columns' => [
+            'uid' => 'uid',
+          ],
+        ],
+        'notification' => [
+          'table' => 'dom_notification',
+          'columns' => [
+            'nid' => 'id',
+          ],
+        ],
+      ],
+    ];
+
+    $schema->createTable($table, $spec);
+  }
 }
