@@ -103,6 +103,7 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
         $messageService->setRecipients($token);
 
         $messageService->setNotification([
+          'title' => t('New notification'),
           'body' => $entity->getMessage(),
           'badge' => 1,
           'icon' => 'optional-icon',
