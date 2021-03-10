@@ -13,6 +13,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\dom_notifications\Event\DomNotificationsReadEvent;
 use Drupal\dom_notifications\Event\DomNotificationsSeenEvent;
+use Drupal\user\Entity\User;
 use Drupal\user\EntityOwnerTrait;
 use Psr\Http\Message\UriInterface;
 use Drupal\user\UserInterface;
@@ -438,6 +439,23 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
     /** @var UserInterface $account */
     $account = \Drupal::entityTypeManager()->getStorage('user')->load(\Drupal::currentUser()->id());
     return $account;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getOwner() {
+    /** @var \Drupal\user\UserInterface $user */
+    $user = $this->entityTypeManager()
+      ->getStorage('user')
+      ->load($this->getOwnerId());
+
+    // Set name when notification author was deleted.
+    if (!$user || $user->isAnonymous()) {
+      $user = User::getAnonymousUser();
+      $user->name = new TranslatableMarkup('Deleted user');
+    }
+    return $user;
   }
 
 }
