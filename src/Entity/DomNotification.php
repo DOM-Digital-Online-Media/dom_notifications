@@ -246,11 +246,12 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
    * {@inheritDoc}
    */
   public function setRedirectUri($uri = NULL) {
-    $this->redirect_options->redirect_uri = $uri instanceof UriInterface
-      ? $uri
-      : $uri
-        ? new Uri($uri)
-        : NULL;
+    if ($uri instanceof UriInterface) {
+      $this->redirect_options->redirect_uri = $uri;
+    }
+    elseif (is_string($uri)) {
+      $this->redirect_options->redirect_uri = new Uri($uri);
+    }
     return $this;
   }
 
@@ -437,7 +438,9 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
       return $user;
     }
     /** @var UserInterface $account */
-    $account = \Drupal::entityTypeManager()->getStorage('user')->load(\Drupal::currentUser()->id());
+    $account = \Drupal::entityTypeManager()
+      ->getStorage('user')
+      ->load(\Drupal::currentUser()->id());
     return $account;
   }
 
