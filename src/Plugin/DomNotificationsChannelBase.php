@@ -7,6 +7,7 @@ use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Query\Condition;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -274,7 +275,14 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
     }, $users_to_add));
     $this->invalidateNotificationCaches();
 
-    return $query->execute();
+    try {
+      $query->execute();
+    }
+    catch (IntegrityConstraintViolationException $exception) {
+      // Maybe user was subscribed after we checked, so just in case.
+    }
+
+    return $this;
   }
 
   /**
