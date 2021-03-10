@@ -98,6 +98,23 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
         continue;
       }
 
+      // @todo: add dependency injection for database service.
+      $query = \Drupal::database()->select('dom_notification_field_data', 'dn');
+      $query->fields('dn', ['id']);
+      $query->condition('dn.uid', $user->id());
+      $query->condition('dn.status', 1);
+      $all_count = $query->countQuery()->execute()->fetchField();
+
+      $query = \Drupal::database()->select('dom_notifications_seen', 'dns');
+      $query->fields('dns', ['nid']);
+      $query->condition('dns.uid', $user->id());
+      $seen_count = $query->countQuery()->execute()->fetchField();
+
+      $count = 1;
+      if ($all_count && $all_count - $seen_count >  1) {
+        $count = $all_count - $seen_count;
+      }
+
       try {
         $messageService = $this->firebase;
         $messageService->setRecipients($token);
@@ -105,7 +122,7 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
         $messageService->setNotification([
           'title' => t('New notification'),
           'body' => $entity->getMessage(),
-          'badge' => 1,
+          'badge' => $count,
           'icon' => 'optional-icon',
           'sound' => 'optional-sound',
           'click_action' => '.MainActivity',
