@@ -9,6 +9,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\firebase\Service\FirebaseMessageService;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\user\Entity\User;
+use Drupal\views\Views;
 
 /**
  * Send notification to the user via firebase service.
@@ -98,13 +99,19 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
         continue;
       }
 
-      // @todo: add dependency injection for database service.
-      $query = \Drupal::database()->select('dom_notification_field_data', 'dn');
-      $query->fields('dn', ['id']);
-      $query->condition('dn.uid', $user->id());
-      $query->condition('dn.status', 1);
-      $all_count = $query->countQuery()->execute()->fetchField();
+      $all_count = 0;
+      if ($view = Views::getView('dom_user_notifications')) {
+        $view->setDisplay('rest_get');
+        $view->setArguments([$user->id()]);
+        $view->setExposedInput([]);
+        $view->execute();
 
+        if (!empty($view->result)) {
+          $all_count = count($view->result);
+        }
+      }
+
+      // @todo: add dependency injection for database service.
       $query = \Drupal::database()->select('dom_notifications_seen', 'dns');
       $query->fields('dns', ['nid']);
       $query->condition('dns.uid', $user->id());
