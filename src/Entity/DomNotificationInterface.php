@@ -95,6 +95,7 @@ interface DomNotificationInterface extends ContentEntityInterface, EntityChanged
 
   /**
    * Returns global/local flag for the current notification.
+   * If the value is TRUE then the notification is global.
    *
    * @return boolean
    */
