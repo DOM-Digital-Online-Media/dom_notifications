@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Database\Database;
+use Drupal\Core\Field\BaseFieldDefinition;
 
 /**
  * Implements hook_schema().
@@ -175,4 +176,19 @@ function dom_notifications_update_8001() {
 
     $schema->createTable($table, $spec);
   }
+}
+
+/**
+ * Add bool field for notification.
+ */
+function dom_notifications_update_8002(&$sandbox) {
+  $definition_manager = \Drupal::entityDefinitionUpdateManager();
+
+  // Install a flag field for notifications.
+  $flag = BaseFieldDefinition::create('boolean')
+    ->setLabel(t('Global'))
+    ->setDescription(t('Indicates if the notification is a global or local.'))
+    ->setInitialValue(0)
+    ->setDefaultValue(0);
+  $definition_manager->installFieldStorageDefinition('flag', 'dom_notification', 'dom_notifications', $flag);
 }

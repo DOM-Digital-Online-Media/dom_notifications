@@ -17,3 +17,6 @@ dom_notifications_stacking.settings:
         uri:
           type: uri
           label: 'Uri to lead user to after clicking on stacked notification'
+        flag:
+          type: boolean
+          label: 'Indicates if the notification is a global or local'

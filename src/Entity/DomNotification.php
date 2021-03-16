@@ -152,6 +152,12 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
     $fields['related_entity_id'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Entity ID of entity related to notification'));
 
+    $fields['flag'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(new TranslatableMarkup('Global'))
+      ->setDescription(new TranslatableMarkup('Indicates if the notification is a global or local.'))
+      ->setInitialValue(0)
+      ->setDefaultValue(0);
+
     return $fields;
   }
 
@@ -412,6 +418,13 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
       }
     }
     return $size;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getFlag() {
+    return (boolean) $this->get('flag')->getString();
   }
 
   /**

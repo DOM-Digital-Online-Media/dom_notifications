@@ -116,6 +116,12 @@ class DomNotificationStackingSettingsForm extends ConfigFormBase {
           '#default_value' => $config_channels[$channel->id()]['uri'] ?? '',
           '#states' => $enabled_states,
         ],
+        'flag' => [
+          '#type' => 'checkbox',
+          '#title' => $this->t('Global'),
+          '#default_value' => $config_channels[$channel->id()]['flag'] ?? '',
+          '#states' => $enabled_states,
+        ],
         'help' => [
           '#theme' => 'item_list',
           '#title' => $this->t('Available placeholders') . ':',
@@ -184,6 +190,7 @@ class DomNotificationStackingSettingsForm extends ConfigFormBase {
           $config_channels[$id]['stack'] = $settings['stack'];
           $config_channels[$id]['message'] = $settings['message'];
           $config_channels[$id]['uri'] = $settings['uri'];
+          $config_channels[$id]['flag'] = $settings['flag'];
         }
         else {
           $disabled[] = $id;

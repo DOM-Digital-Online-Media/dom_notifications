@@ -94,6 +94,13 @@ interface DomNotificationInterface extends ContentEntityInterface, EntityChanged
   public function getStackSize();
 
   /**
+   * Returns global/local flag for the current notification.
+   *
+   * @return boolean
+   */
+  public function getFlag();
+
+  /**
    * Return whether notification is seen by certain user.
    *
    * @param \Drupal\user\UserInterface|null $user

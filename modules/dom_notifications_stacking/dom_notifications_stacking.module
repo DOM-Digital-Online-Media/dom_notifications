@@ -92,6 +92,8 @@ function dom_notifications_stacking_dom_notification_presave(EntityInterface $en
     elseif ($current_stack > $stacking[$channel_id]['stack']) {
       $entity->setPublished(FALSE);
     }
+
+    $entity->set('flag', (boolean) $stacking[$channel_id]['flag']);
   }
 }
 

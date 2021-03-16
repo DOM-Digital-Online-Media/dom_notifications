@@ -50,6 +50,11 @@ class DomNotificationForm extends ContentEntityForm {
       '#title' => $this->t('Redirect Uri'),
       '#default_value' => $uri ? $uri->__toString() : '',
     ];
+    $form['flag'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Global'),
+      '#default_value' => $entity->getFlag(),
+    ];
     if (($channel = $entity->getChannel()) && ($info = $channel->getChannelPlaceholderInfo())) {
       $form['help'] = [
         '#theme' => 'item_list',
