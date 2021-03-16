@@ -3,21 +3,21 @@
 namespace Drupal\dom_notifications\Plugin\views\field;
 
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\views\Plugin\views\field\Boolean;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * A handler to provide read status for the notification and user.
+ * A handler to provide read and seen status for the notification and user.
  *
  * @ingroup views_field_handlers
  *
- * @ViewsField("dom_notifications_read_uid")
+ * @ViewsField("dom_notifications_read_seen_field")
  */
-class DomNotificationsReadUid extends Boolean {
+class DomNotificationsReadSeenField extends Boolean {
 
   /**
    * Current user account proxy.
+   *
    * @var \Drupal\Core\Session\AccountProxyInterface
    */
   protected $current_user;
@@ -81,7 +81,7 @@ class DomNotificationsReadUid extends Boolean {
       $join->type = 'LEFT';
 
       // Add user filter, so the value returned either user id or NULL which
-      // helps determine whether notification is read by the user.
+      // helps determine whether notification is read/seen by the user.
       if (!isset($this->options['user']) || ($this->options['user'] === 'none')) {
         $join->extra = $this->table . '.' . $this->realField . ' = ' . $this->current_user->id();
       }

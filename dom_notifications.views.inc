@@ -87,7 +87,11 @@ function dom_notifications_views_data() {
     'help' => t('Boolean field indicating that user has seen the notification.'),
     'field' => [
       'field' => 'uid',
-      'id' => 'dom_notifications_seen_uid',
+      'id' => 'dom_notifications_read_seen_field',
+    ],
+    'filter' => [
+      'field' => 'uid',
+      'id' => 'dom_notifications_read_seen_filter',
     ],
   ];
 
@@ -104,7 +108,11 @@ function dom_notifications_views_data() {
     'help' => t('Boolean field indicating that user has read the notification.'),
     'field' => [
       'field' => 'uid',
-      'id' => 'dom_notifications_read_uid',
+      'id' => 'dom_notifications_read_seen_field',
+    ],
+    'filter' => [
+      'field' => 'uid',
+      'id' => 'dom_notifications_read_seen_filter',
     ],
   ];
 

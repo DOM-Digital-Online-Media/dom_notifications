@@ -1,22 +1,19 @@
 <?php
 
-namespace Drupal\dom_notifications\Plugin\views\field;
+namespace Drupal\dom_notifications\Plugin\views\filter;
 
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\views\Plugin\views\field\Boolean;
+use Drupal\views\Plugin\views\filter\BooleanOperator;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * A handler to provide seen status for the notification and user.
+ * Views filter to show only seen/unseen or read/unread notifications.
  *
- * @ingroup views_field_handlers
- *
- * @ViewsField("dom_notifications_seen_uid")
+ * @ViewsFilter("dom_notifications_read_seen_filter")
  */
-class DomNotificationsSeenUid extends Boolean {
+class DomNotificationsReadSeenFilter extends BooleanOperator {
 
   /**
-   * Current user account proxy.
    * @var \Drupal\Core\Session\AccountProxyInterface
    */
   protected $current_user;
@@ -93,6 +90,19 @@ class DomNotificationsSeenUid extends Boolean {
       $this->tableAlias = $this->query->ensureTable($this->table, $this->relationship, $join);
     }
     return $this->tableAlias;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  protected function queryOpBoolean($field, $query_operator = self::EQUAL) {
+    if (empty($this->value)) {
+      $is_null = $query_operator === self::EQUAL;
+    }
+    else {
+      $is_null = $query_operator === self::NOT_EQUAL;
+    }
+    $this->query->addWhere($this->options['group'], $field, NULL, $is_null ? 'IS NULL' : 'IS NOT NULL');
   }
 
 }

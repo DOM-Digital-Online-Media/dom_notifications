@@ -2,14 +2,13 @@
 
 namespace Drupal\dom_notifications_firebase\Plugin\QueueWorker;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\dom_notifications\DomNotificationsServiceInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\firebase\Service\FirebaseMessageService;
 use Drupal\Core\Datetime\DateFormatterInterface;
-use Drupal\user\Entity\User;
-use Drupal\views\Views;
 
 /**
  * Send notification to the user via firebase service.
@@ -23,25 +22,32 @@ use Drupal\views\Views;
 class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements ContainerFactoryPluginInterface {
 
   /**
-   * Provides config.factory service.
+   * Notifications service.
    *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   * @var \Drupal\dom_notifications\DomNotificationsServiceInterface
    */
-  protected $config;
+  protected $notificationsService;
 
   /**
-   * Provides firebase.message service.
+   * Firebase service.
    *
    * @var \Drupal\firebase\Service\FirebaseMessageService
    */
   protected $firebase;
 
   /**
-   * Provides date.formatter service.
+   * Date formatter service.
    *
    * @var \Drupal\Core\Datetime\DateFormatterInterface
    */
   protected $date;
+
+  /**
+   * Entity type manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
 
   /**
    * Constructs a new class instance.
@@ -52,18 +58,21 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
    *   The plugin_id for the plugin instance.
    * @param mixed $plugin_definition
    *   The plugin implementation definition.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
-   *   Defines the interface for a configuration object factory.
+   * @param \Drupal\dom_notifications\DomNotificationsServiceInterface $notifications_service
+   *   Notifications service.
    * @param \Drupal\firebase\Service\FirebaseMessageService $firebase
    *   Service for pushing message to mobile devices using Firebase.
    * @param \Drupal\Core\Datetime\DateFormatterInterface $date
    *   Provides an interface defining a date formatter.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   Entity type manager service.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, ConfigFactoryInterface $config, FirebaseMessageService $firebase, DateFormatterInterface $date) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, DomNotificationsServiceInterface $notifications_service, FirebaseMessageService $firebase, DateFormatterInterface $date, EntityTypeManagerInterface $entity_type_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->config = $config;
+    $this->notificationsService = $notifications_service;
     $this->firebase = $firebase;
     $this->date = $date;
+    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
@@ -74,9 +83,10 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('config.factory'),
+      $container->get('dom_notifications.service'),
       $container->get('firebase.message'),
-      $container->get('date.formatter')
+      $container->get('date.formatter'),
+      $container->get('entity_type.manager')
     );
   }
 
@@ -84,7 +94,7 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
    * {@inheritdoc}
    */
   public function processItem($data) {
-    $settings = $this->config->get('dom_notifications.settings')->get('token');
+    $settings = $this->notificationsService->getNotificationsSettings()['token'];
     if (!$settings) {
       return;
     }
@@ -93,34 +103,15 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
     $entity = $data['entity'];
     $action = $entity->retrieveRedirectUri()->__toString();
 
-    foreach (User::loadMultiple($data['recipients']) as $user) {
+    /** @var \Drupal\user\UserInterface $user */
+    foreach ($this->entityTypeManager->getStorage('user')->loadMultiple($data['recipients']) as $user) {
       $token = $user->hasField($settings) ? $user->get($settings)->getString() : '';
       if (!$token || !$entity->getChannel()->getAlertsStatus($user->id())) {
         continue;
       }
 
-      $all_count = 0;
-      if ($view = Views::getView('dom_user_notifications')) {
-        $view->setDisplay('rest_get');
-        $view->setArguments([$user->id()]);
-        $view->setExposedInput([]);
-        $view->execute();
-
-        if (!empty($view->result)) {
-          $all_count = count($view->result);
-        }
-      }
-
-      // @todo: add dependency injection for database service.
-      $query = \Drupal::database()->select('dom_notifications_seen', 'dns');
-      $query->fields('dns', ['nid']);
-      $query->condition('dns.uid', $user->id());
-      $seen_count = $query->countQuery()->execute()->fetchField();
-
-      $count = 1;
-      if ($all_count && $all_count - $seen_count >  1) {
-        $count = $all_count - $seen_count;
-      }
+      // Fetch all unseen user messages to get count.
+      $unseen = $this->notificationsService->fetchNotifications($user, ['is_seen' => FALSE]);
 
       try {
         $messageService = $this->firebase;
@@ -128,8 +119,8 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
 
         $messageService->setNotification([
           'title' => t('New notification'),
-          'body' => $entity->getMessage(),
-          'badge' => $count,
+          'body' => strip_tags($entity->retrieveMessage()),
+          'badge' => count($unseen),
           'icon' => 'optional-icon',
           'sound' => 'optional-sound',
           'click_action' => '.MainActivity',

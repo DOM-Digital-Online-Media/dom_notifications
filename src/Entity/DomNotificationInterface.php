@@ -27,11 +27,16 @@ interface DomNotificationInterface extends ContentEntityInterface, EntityChanged
   public function setMessage(string $message);
 
   /**
-   * Returns message for the notification.
+   * Returns message for the notification from db.
    *
    * @return string|null
    */
   public function getMessage();
+
+  /**
+   * Returns finalised message for notification without placeholders.
+   */
+  public function retrieveMessage();
 
   /**
    * Returns redirect Uri for the notification based on it's channel and settings.

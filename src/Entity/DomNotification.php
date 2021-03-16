@@ -192,6 +192,13 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   /**
    * {@inheritDoc}
    */
+  public function retrieveMessage() {
+    return $this->get('computed_message')->getString();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public function retrieveRedirectUri() {
     return new Uri($this->get('redirect_link')->getString());
   }
@@ -229,6 +236,7 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
       ->select('dom_notifications_user_channels', 'dnuc')
       ->fields('dnuc', ['uid'])
       ->condition('channel_id', $this->getChannelID())
+      ->condition('uid', $this->getOwnerId(), '<>')
       ->execute()
       ->fetchCol();
   }
