@@ -106,7 +106,7 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
     /** @var \Drupal\user\UserInterface $user */
     foreach ($this->entityTypeManager->getStorage('user')->loadMultiple($data['recipients']) as $user) {
       $token = $user->hasField($settings) ? $user->get($settings)->getString() : '';
-      if (!$token || !$entity->getChannel()->getAlertsStatus($user->id())) {
+      if (!$token) {
         continue;
       }
 

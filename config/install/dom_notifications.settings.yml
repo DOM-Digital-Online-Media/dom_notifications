@@ -1,3 +1,4 @@
 keep_notification_months: 3
 token: null
+channels: {  }
 user_count: 100

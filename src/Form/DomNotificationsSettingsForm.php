@@ -62,12 +62,6 @@ class DomNotificationsSettingsForm extends FormBase {
       '#required' => TRUE,
     ];
 
-    $options = [];
-    $field_map = $this->fieldManager->getFieldDefinitions('user', 'user');
-    foreach ($field_map as $name => $item) {
-      $options[$name] = $item->getLabel();
-    }
-
     $form['firebase'] = [
       '#type' => 'details',
       '#open' => TRUE,
@@ -75,12 +69,33 @@ class DomNotificationsSettingsForm extends FormBase {
       '#access' => $this->moduleHandler->moduleExists('dom_notifications_firebase'),
     ];
 
+    // Get user field options.
+    $user_field_options = [];
+    $field_map = $this->fieldManager->getFieldDefinitions('user', 'user');
+    foreach ($field_map as $name => $item) {
+      $user_field_options[$name] = $item->getLabel();
+    }
+
     $form['firebase']['token'] = [
       '#type' => 'select',
       '#title' => $this->t('FCM token field'),
-      '#description' => $this->t('Choose a user field where his FCM token is saved. '),
-      '#options' => $options,
+      '#description' => $this->t('Choose a user field where his FCM token is saved.'),
+      '#options' => $user_field_options,
       '#default_value' => $settings['token'],
+    ];
+
+    // Get channel options.
+    $channel_options = [];
+    foreach ($this->notificationsService->getChannelManager()->getAllChannels() as $channel) {
+      $channel_options[$channel->id()] = $channel->getLabel();
+    }
+
+    $form['firebase']['channels'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Notification channels'),
+      '#description' => $this->t('Choose a notification channels for which firebase pushes will be sent.'),
+      '#options' => $channel_options,
+      '#default_value' => $settings['channels'],
     ];
 
     $form['firebase']['user_count'] = [
@@ -104,7 +119,10 @@ class DomNotificationsSettingsForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $settings = $this->notificationsService->getNotificationsSettings();
     foreach ($form_state->getValues() as $key => $value) {
-      $settings[$key] = $value;
+      // Save only settings without odd form elements like submit button.
+      if (array_key_exists($key, $settings)) {
+        $settings[$key] = $value;
+      }
     }
     $this->notificationsService->setNotificationsSettings($settings);
   }

@@ -15,17 +15,22 @@ function dom_notifications_firebase_dom_notification_presave(EntityInterface $en
   $just_published = !empty($entity->original)
     ? !$entity->original->isPublished() && $entity->isPublished()
     : $entity->isPublished();
-  if (!$just_published) {
+
+  /** @var \Drupal\dom_notifications\DomNotificationsServiceInterface $notifications_service */
+  $notifications_service = \Drupal::service('dom_notifications.service');
+
+  // Get channels which should initiate firebase notification.
+  $config = $notifications_service->getNotificationsSettings();
+  $channels = array_filter($config['channels'] ?? []);
+
+  if (!$just_published || !in_array($entity->getChannel()->id(), $channels)) {
     return;
   }
 
   $queue = \Drupal::queue('dom_notifications_firebase_queue_worker');
-  $queue->createQueue();
+  $chunks = array_chunk($entity->getRecipients(), $config['user_count'] ?? 100);
+
   $data = ['entity' => $entity];
-
-  $configs = \Drupal::config('dom_notifications.settings')->get('user_count');
-  $chunks = array_chunk($entity->getRecipients(), $configs ?? 100);
-
   foreach ($chunks as $chunk) {
     $data['recipients'] = $chunk;
     $queue->createItem($data);
