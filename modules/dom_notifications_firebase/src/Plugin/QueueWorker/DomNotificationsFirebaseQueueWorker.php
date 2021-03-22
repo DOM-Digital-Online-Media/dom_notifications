@@ -16,7 +16,7 @@ use Drupal\Core\Datetime\DateFormatterInterface;
  * @QueueWorker(
  *   id = "dom_notifications_firebase_queue_worker",
  *   title = @Translation("DOM: Notifications firebase"),
- *   cron = {"time" = 60}
+ *   cron = {"time" = 45}
  * )
  */
 class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements ContainerFactoryPluginInterface {
@@ -94,44 +94,54 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
    * {@inheritdoc}
    */
   public function processItem($data) {
-    $settings = $this->notificationsService->getNotificationsSettings()['token'];
-    if (!$settings) {
+    $settings = $this->notificationsService->getNotificationsSettings();
+    $token = $settings['token'];
+
+    if (!$token) {
       return;
     }
+
+    // Get channels which should initiate full firebase notification.
+    $push_channels = array_filter($settings['channels'] ?? []);
 
     /** @var \Drupal\dom_notifications\Entity\DomNotificationInterface $entity */
     $entity = $data['entity'];
     $action = $entity->retrieveRedirectUri()->__toString();
-
-    /** @var \Drupal\user\UserInterface $user */
     foreach ($this->entityTypeManager->getStorage('user')->loadMultiple($data['recipients']) as $user) {
-      $token = $user->hasField($settings) ? $user->get($settings)->getString() : '';
+      /** @var \Drupal\user\UserInterface $user */
+      $token = $user->hasField($token) ? $user->get($token)->getString() : NULL;
       if (!$token) {
         continue;
       }
 
       // Fetch all unseen user messages to get count.
-      $unseen = $this->notificationsService->fetchNotifications($user, ['is_seen' => FALSE]);
+      $unseen = count($this->notificationsService->fetchNotifications($user, ['is_seen' => FALSE]));
 
       try {
         $messageService = $this->firebase;
         $messageService->setRecipients($token);
 
-        $messageService->setNotification([
-          'title' => t('New notification'),
-          'body' => strip_tags($entity->retrieveMessage()),
-          'badge' => count($unseen),
-          'icon' => 'optional-icon',
-          'sound' => 'optional-sound',
-          'click_action' => '.MainActivity',
-        ]);
-
-        $messageService->setData([
-          'url' => !empty($action) ? $action : '{}',
-          'score' => '3x1',
-          'date' => $this->date->format($entity->getCreatedTime(), '', 'Y-m-d'),
-          'optional' => t('Data is used to send silent pushes. Otherwise, optional.'),
-        ]);
+        if (in_array($entity->getChannel()->id(), $push_channels)) {
+          $messageService->setNotification([
+            'title' => t('New notification'),
+            'body' => strip_tags($entity->retrieveMessage()),
+            'badge' => $unseen,
+            'icon' => 'optional-icon',
+            'sound' => 'optional-sound',
+            'click_action' => '.MainActivity',
+          ]);
+          $messageService->setData([
+            'url' => !empty($action) ? $action : '{}',
+            'score' => '3x1',
+            'date' => $this->date->format($entity->getCreatedTime(), '', 'Y-m-d'),
+            'optional' => t('Data is used to send silent pushes. Otherwise, optional.'),
+          ]);
+        }
+        else {
+          $messageService->setData([
+            'badge' => $unseen,
+          ]);
+        }
 
         $messageService->setOptions(['priority' => 'normal']);
         $messageService->send();

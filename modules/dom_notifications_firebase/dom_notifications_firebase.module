@@ -16,14 +16,7 @@ function dom_notifications_firebase_dom_notification_presave(EntityInterface $en
     ? !$entity->original->isPublished() && $entity->isPublished()
     : $entity->isPublished();
 
-  /** @var \Drupal\dom_notifications\DomNotificationsServiceInterface $notifications_service */
-  $notifications_service = \Drupal::service('dom_notifications.service');
-
-  // Get channels which should initiate firebase notification.
-  $config = $notifications_service->getNotificationsSettings();
-  $channels = array_filter($config['channels'] ?? []);
-
-  if (!$just_published || !in_array($entity->getChannel()->id(), $channels)) {
+  if (!$just_published) {
     return;
   }
 
