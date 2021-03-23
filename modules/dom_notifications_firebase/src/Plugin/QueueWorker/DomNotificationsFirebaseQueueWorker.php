@@ -138,6 +138,7 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
           ]);
         }
         else {
+          $messageService->setOptions(['content_available' => TRUE]);
           $messageService->setData([
             'badge' => $unseen,
           ]);
