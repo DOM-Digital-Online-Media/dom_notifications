@@ -208,7 +208,7 @@ interface DomNotificationsChannelInterface extends PluginInspectionInterface, Co
    * @param \Drupal\dom_notifications\Entity\DomNotificationInterface $notification
    *   Notification to get redirect uri for.
    *
-   * @return \GuzzleHttp\Psr7\Uri
+   * @return \GuzzleHttp\Psr7\Uri|string
    */
   public function alterRedirectUri(DomNotificationInterface $notification, Uri $uri = NULL);
 
