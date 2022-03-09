@@ -50,8 +50,7 @@ function dom_notifications_stacking_dom_notification_presave(EntityInterface $en
   $stacking = \Drupal::config('dom_notifications_stacking.settings')->get('channels');
   $stacking = array_combine(array_column($stacking, 'channel_plugin'), $stacking);
   $enabled = isset($stacking[$channel_id]['stack'])
-    ? $stacking[$channel_id]['stack'] > 1
-    : FALSE;
+    && $stacking[$channel_id]['stack'] > 1;
 
   // If stacking is not enabled for a channel then don't do anything.
   if ($enabled) {
@@ -106,8 +105,7 @@ function dom_notifications_stacking_dom_notification_insert(EntityInterface $ent
   $stacking = \Drupal::config('dom_notifications_stacking.settings')->get('channels');
   $stacking = array_combine(array_column($stacking, 'channel_plugin'), $stacking);
   $enabled = isset($stacking[$channel_id]['stack'])
-    ? $stacking[$channel_id]['stack'] > 1
-    : FALSE;
+    && $stacking[$channel_id]['stack'] > 1;
 
   // If stacking is enabled and notification is not published then remove it.
   if ($enabled && !$entity->isPublished()) {
