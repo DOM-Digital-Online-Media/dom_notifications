@@ -4,6 +4,7 @@ namespace Drupal\dom_notifications;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Database\Connection;
@@ -19,6 +20,7 @@ use Drupal\views\Views;
  */
 class DomNotificationsService implements DomNotificationsServiceInterface {
   use StringTranslationTrait;
+  use DependencySerializationTrait;
 
   /**
    * Entity type manager service.
@@ -121,7 +123,8 @@ class DomNotificationsService implements DomNotificationsServiceInterface {
     $computed_channel_id = $channel->getComputedChannelId();
 
     // If computed channel ID is empty than user is not sufficient for channel.
-    if (empty($computed_channel_id)) {
+    if (empty($computed_channel_id)
+  || !$channel->isSubscribed($recipient_user->id())) {
       return NULL;
     }
     $notification->setChannelID($computed_channel_id);
