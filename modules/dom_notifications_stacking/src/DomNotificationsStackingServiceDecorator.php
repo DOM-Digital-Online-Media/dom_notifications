@@ -106,7 +106,7 @@ class DomNotificationsStackingServiceDecorator implements DomNotificationsServic
   }
 
   /**
-   * @inheritDoc
+   * {@inheritdoc}
    */
   public function addNotification($channel_id, array $fields = [], $message = '', UserInterface $recipient = NULL, UserInterface $sender = NULL) {
     $entity = $this->original
