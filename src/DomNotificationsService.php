@@ -123,8 +123,10 @@ class DomNotificationsService implements DomNotificationsServiceInterface {
     $computed_channel_id = $channel->getComputedChannelId();
 
     // If computed channel ID is empty than user is not sufficient for channel.
+    // Also if individual channel does not have the recipient subscribed
+    // anymore we may not produce this notification.
     if (empty($computed_channel_id)
-  || !$channel->isSubscribed($recipient_user->id())) {
+  || ($channel->isIndividual() && !$channel->isSubscribed($recipient_user->id()))) {
       return NULL;
     }
     $notification->setChannelID($computed_channel_id);
