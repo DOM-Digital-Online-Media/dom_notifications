@@ -7,3 +7,9 @@ services:
   dom_notifications_stacking.service:
     class: Drupal\dom_notifications_stacking\DomNotificationsStackingService
     arguments: ['@database']
+  dom_notifications_stacking.notification_decorator:
+    class: Drupal\dom_notifications_stacking\DomNotificationsStackingServiceDecorator
+    public: false
+    decorates: dom_notifications.service
+    decoration_priority: 50
+    arguments: ['@dom_notifications_stacking.notification_decorator.inner', '@entity_type.manager', '@database', '@current_user', '@plugin.manager.dom_notifications_channel', '@config.factory', '@string_translation', '@datetime.time', '@dom_notifications_stacking.service']

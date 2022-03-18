@@ -232,6 +232,13 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
    * {@inheritDoc}
    */
   public function getRecipients() {
+    if ($this->getChannel()->isIndividual()) {
+
+      // Optimisation for individual channel. Recipient is in channel id anyway.
+      $uid = str_replace($this->getChannel()->getChannelBaseID() . ':', '', $this->getChannelID());
+      return [$uid];
+    }
+
     return \Drupal::database()
       ->select('dom_notifications_user_channels', 'dnuc')
       ->fields('dnuc', ['uid'])
