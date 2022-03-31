@@ -292,7 +292,7 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
     $query = $this->database
       ->delete('dom_notifications_user_channels')
       ->condition('channel_plugin_id', $this->id())
-      ->condition('uid', $users);
+      ->condition('uid', $users, 'IN');
 
     $this->invalidator->invalidateTags(array_map(function ($id) {
       return 'user:' . $id;
