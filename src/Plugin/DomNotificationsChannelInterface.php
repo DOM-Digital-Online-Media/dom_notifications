@@ -92,16 +92,16 @@ interface DomNotificationsChannelInterface extends PluginInspectionInterface, Co
   public function getSpecificChannels();
 
   /**
-   * Returns specific channel ID for channel instance looking at config values.
+   * Returns specific channel IDs for channel instance looking at config values.
    *
    * @param \Drupal\Core\Entity\EntityInterface[] $entities
    *   Entities to retrieve computed channel id, like user or content.
    *
-   * @return string|null
-   *   Returns null if user is not sufficient for the channel, i.e. does not
-   *   have some field value required for the channel etc.
+   * @return string[]
+   *   Returns empty array if $entities is not sufficient for the channel, i.e.
+   *   does not have some field value required for the channel etc.
    */
-  public function getComputedChannelId(array $entities = []);
+  public function getComputedChannelIds(array $entities = []);
 
   /**
    * Returns whether channel uses related entity uri as notification uri.

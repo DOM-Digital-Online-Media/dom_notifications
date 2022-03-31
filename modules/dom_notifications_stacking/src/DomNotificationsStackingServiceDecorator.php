@@ -142,7 +142,7 @@ class DomNotificationsStackingServiceDecorator implements DomNotificationsServic
           $previous_stack = $current_stack - $stacking_channels[$channel_id]['stack'];
           $storage = $this->entityTypeManager->getStorage('dom_notification');
           $previous = $storage->loadByProperties([
-            'channel_id' => $entity->getChannelID(),
+            'channel_id' => $entity->getChannelIDs()[0],
             'stack_size' => $previous_stack,
           ]);
           /** @var \Drupal\dom_notifications\Entity\DomNotificationInterface $notification */

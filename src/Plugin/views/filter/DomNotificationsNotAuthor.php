@@ -45,8 +45,10 @@ class DomNotificationsNotAuthor extends FilterPluginBase {
       parent::query();
     }
     else {
-      $user_field = $this->query->view->relationship[$this->options['user']]->tableAlias . '.';
-      $user_field .= $this->query->view->relationship[$this->options['user']]->realField;
+      $user_field = $this->query->view->relationship[$this->options['user']]->alias
+        ?? $this->query->view->relationship[$this->options['user']]->table;
+      $user_field .= '.' . $this->query->view->relationship[$this->options['user']]->realField
+        ?? $this->query->view->relationship[$this->options['user']]->field;
       $this->query->addWhereExpression($this->options['group'], "{$this->tableAlias}.{$this->realField} <> {$user_field}");
     }
   }

@@ -47,7 +47,7 @@ class DomNotificationsStackingService implements DomNotificationsStackingService
     if ($query->countQuery()->execute()->fetchField() > 0) {
       $this->database->update('dom_notifications_stacking')
         ->fields(['count' => $stack])
-        ->condition('channel_id', $notification->getChannelID())
+        ->condition('channel_id', $notification->getChannelIDs()[0])
         ->condition('related_entity_type', $entity_type)
         ->condition('related_entity_id', $entity_id)
         ->execute();
@@ -56,7 +56,7 @@ class DomNotificationsStackingService implements DomNotificationsStackingService
       $this->database->insert('dom_notifications_stacking')
         ->fields([
           'channel_plugin_id' => $notification->getChannel()->id(),
-          'channel_id' => $notification->getChannelID(),
+          'channel_id' => $notification->getChannelIDs()[0],
           'count' => $stack,
           'related_entity_type' => $entity_type,
           'related_entity_id' => $entity_id,
@@ -76,9 +76,10 @@ class DomNotificationsStackingService implements DomNotificationsStackingService
    */
   private function getStackingTableQueryForNotification(DomNotificationInterface $notification) {
     $entity = $notification->getChannel()->getStackRelatedEntity($notification);
+
     $query = $this->database->select('dom_notifications_stacking', 'dns');
     $query->fields('dns', ['count']);
-    $query->condition('dns.channel_id', $notification->getChannelID());
+    $query->condition('dns.channel_id', $notification->getChannelIDs()[0]);
     $query->condition('dns.related_entity_type', $entity ? $entity->getEntityTypeId() : '');
     $query->condition('dns.related_entity_id', $entity ? $entity->id() : 0);
     return $query;

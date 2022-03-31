@@ -83,7 +83,8 @@ class DomNotificationsReadSeenFilter extends BooleanOperator {
       }
       else {
         $join->extra = $this->table . '.' . $this->realField . ' = ';
-        $join->extra .= $this->view->relationship[$this->options['user']]->table;
+        $join->extra .= $this->view->relationship[$this->options['user']]->alias
+          ?? $this->view->relationship[$this->options['user']]->table;
         $join->extra .= '.' . $this->view->relationship[$this->options['user']]->realField
           ?? $this->view->relationship[$this->options['user']]->field;
       }

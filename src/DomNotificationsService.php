@@ -120,16 +120,16 @@ class DomNotificationsService implements DomNotificationsServiceInterface {
     }
 
     $channel = $this->getChannelManager()->createInstance($channel_id, $configs);
-    $computed_channel_id = $channel->getComputedChannelId();
+    $computed_channel_ids = $channel->getComputedChannelIds();
 
     // If computed channel ID is empty than user is not sufficient for channel.
     // Also if individual channel does not have the recipient subscribed
     // anymore we may not produce this notification.
-    if (empty($computed_channel_id)
-  || ($channel->isIndividual() && !$channel->isSubscribed($recipient_user->id()))) {
+    if (empty($computed_channel_ids)) {
       return NULL;
     }
-    $notification->setChannelID($computed_channel_id);
+    $notification->setChannelIDs($computed_channel_ids);
+    $notification->setChannelPluginID($channel_id);
 
     // Fallback to current user if no user passed and no related entity available.
     $notification->setOwner($sender_user ?? $this->currentUser);
@@ -218,7 +218,6 @@ class DomNotificationsService implements DomNotificationsServiceInterface {
     $ids = $storage
       ->getQuery()
       ->condition('created', $oldest_allowed, '<')
-      ->addTag('dom_notification_omit_access')
       ->execute();
 
     if ($notifications = $storage->loadMultiple($ids)) {

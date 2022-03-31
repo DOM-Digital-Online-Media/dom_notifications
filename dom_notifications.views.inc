@@ -33,24 +33,9 @@ function dom_notifications_views_data() {
   // Add user channels plugin table fields.
   $data['dom_notifications_user_channels']['table']['group'] = t('Dom Notification');
   $data['dom_notifications_user_channels']['table']['join'] = [
-    'dom_notification_field_data' => [
-      'left_field' => 'channel_id',
+    'dom_notification__channel_id' => [
+      'left_field' => 'channel_id_value',
       'field' => 'channel_id',
-    ],
-  ];
-  $data['dom_notifications_user_channels']['channel_plugin_id'] = [
-    'title' => t('Channel Plugin ID'),
-    'field' => [
-      'id' => 'standard',
-    ],
-    'filter' => [
-      'id' => 'string',
-    ],
-    'argument' => [
-      'id' => 'string',
-    ],
-    'sort' => [
-      'id' => 'standard',
     ],
   ];
   $data['dom_notifications_user_channels']['notify'] = [
@@ -66,6 +51,15 @@ function dom_notifications_views_data() {
   $data['dom_notifications_user_channels']['uid'] = [
     'title' => t('Recipient'),
     'help' => t('User that receives notification.'),
+    'field' => [
+      'id' => 'standard',
+    ],
+    'filter' => [
+      'id' => 'numeric',
+    ],
+    'argument' => [
+      'id' => 'numeric'
+    ],
     'relationship' => [
       'base' => 'users_field_data',
       'base field' => 'uid',
@@ -117,4 +111,16 @@ function dom_notifications_views_data() {
   ];
 
   return $data;
+}
+
+/**
+ * Implements hook_views_data_alter().
+ */
+function dom_notifications_views_data_alter(array &$data) {
+  $data['dom_notification__channel_id']['channel_id_value']['relationship'] = [
+    'base' => 'dom_notifications_user_channels',
+    'base field' => 'channel_id',
+    'id' => 'standard',
+    'label' => t('Recipients'),
+  ];
 }

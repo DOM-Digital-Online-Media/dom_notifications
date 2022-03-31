@@ -10,6 +10,7 @@ use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityPublishedTrait;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\dom_notifications\Event\DomNotificationsReadEvent;
 use Drupal\dom_notifications\Event\DomNotificationsSeenEvent;
@@ -104,10 +105,16 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
     $fields += static::publishedBaseFieldDefinitions($entity_type);
     $fields += static::ownerBaseFieldDefinitions($entity_type);
 
-    $fields['channel_id'] = BaseFieldDefinition::create('string')
-      ->setLabel(new TranslatableMarkup('Channel'))
-      ->setDescription(new TranslatableMarkup('The channel identifying set of users subscribed to this notification.'))
+    $fields['channel_plugin_id'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Channel plugin id'))
+      ->setDescription(new TranslatableMarkup('The channels plugin id this notification belongs to.'))
       ->setTranslatable(FALSE);
+
+    $fields['channel_id'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Channels'))
+      ->setDescription(new TranslatableMarkup('The channels identifying set of users subscribed to this notification.'))
+      ->setTranslatable(FALSE)
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED);
 
     $fields['status']->setDescription(new TranslatableMarkup('A boolean indicating whether the notification is published.'))
       ->setDisplayOptions('view', [
@@ -156,7 +163,7 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
   public static function postDelete(EntityStorageInterface $storage, array $entities) {
     parent::postDelete($storage, $entities);
@@ -175,7 +182,7 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
   public function setMessage(string $message) {
     $this->set('message', $message);
@@ -183,28 +190,28 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
   public function getMessage() {
     return $this->get('message')->getString();
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
   public function retrieveMessage() {
     return $this->get('computed_message')->getString();
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
   public function retrieveRedirectUri() {
     return new Uri($this->get('redirect_link')->getString());
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
   public function setRelatedEntity(EntityInterface $entity = NULL) {
     $this->set('related_entity_type', $entity ? $entity->getEntityTypeId() : NULL);
@@ -213,7 +220,7 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
   public function getRelatedEntity() {
     if (!isset($this->relatedEntity)) {
@@ -229,27 +236,29 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
   public function getRecipients() {
     if ($this->getChannel()->isIndividual()) {
 
       // Optimisation for individual channel. Recipient is in channel id anyway.
-      $uid = str_replace($this->getChannel()->getChannelBaseID() . ':', '', $this->getChannelID());
+      $id = $this->getChannelIDs();
+      $id = reset($id);
+      $uid = str_replace($this->getChannel()->getChannelBaseID() . ':', '', $id);
       return [$uid];
     }
 
     return \Drupal::database()
       ->select('dom_notifications_user_channels', 'dnuc')
       ->fields('dnuc', ['uid'])
-      ->condition('channel_id', $this->getChannelID())
+      ->condition('channel_id', $this->getChannelIDs(), 'IN')
       ->condition('uid', $this->getOwnerId(), '<>')
       ->execute()
       ->fetchCol();
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
   public function getRedirectUri() {
     return !empty($this->redirect_options->redirect_uri)
@@ -258,7 +267,7 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
   public function setRedirectUri($uri = NULL) {
     if ($uri instanceof UriInterface) {
@@ -271,28 +280,49 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
-  public function getChannelID() {
-    return $this->get('channel_id')->getString();
+  function getChannelPluginID() {
+    return $this->get('channel_plugin_id')->getString();
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
-  public function setChannelID($channel) {
-    $this->set('channel_id', $channel);
+  function setChannelPluginID($plugin_id) {
+    $this->set('channel_plugin_id', $plugin_id);
     return $this;
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
+   */
+  public function getChannelIDs() {
+    return array_column($this->get('channel_id')->getValue(), 'value');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setChannelIDs($channels) {
+    $this->set('channel_id', $channels);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
    */
   public function getChannel() {
     if (!isset($this->channel)) {
       /** @var \Drupal\dom_notifications\Plugin\DomNotificationsChannelManagerInterface $channel_manager */
       $channel_manager = \Drupal::service('plugin.manager.dom_notifications_channel');
-      $plugin_id = $channel_manager->getPluginIDBySpecificChannel($this->getChannelID());
+      $plugin_id = $this->getChannelPluginID();
+
+      // Legacy support for old notifications.
+      // @todo delete when notifications with empry plugin ids no longer exists.
+      if (empty($plugin_id)) {
+        $plugin_id = $channel_manager->getPluginIDBySpecificChannel($this->getChannelIDs()[0]);
+      }
       $this->channel = $channel_manager->createInstance($plugin_id);
     }
 

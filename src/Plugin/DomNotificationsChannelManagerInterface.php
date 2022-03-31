@@ -37,6 +37,8 @@ interface DomNotificationsChannelManagerInterface extends PluginManagerInterface
    *   Channel ID of a particular channel instance like article:2.
    *
    * @return string
+   *
+   * @deprecated in favour of channel plugin id stored alongside with specific.
    */
   public function getPluginIDBySpecificChannel($channel_id);
 

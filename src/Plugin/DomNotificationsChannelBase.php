@@ -200,8 +200,8 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
   /**
    * {@inheritDoc}
    */
-  public function getComputedChannelId(array $entities = []) {
-    return $this->id();
+  public function getComputedChannelIds(array $entities = []) {
+    return [$this->id()];
   }
 
   /**
@@ -260,13 +260,15 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
         $user = $this->entityTypeManager->getStorage('user')->load($uid);
       }
 
-      if ($computed_channel_id = $this->getComputedChannelId(['user' => $user])) {
-        $query->values([
-          $uid,
-          $computed_channel_id,
-          $this->id(),
-          (int) $notify
-        ]);
+      if ($computed_channel_ids = $this->getComputedChannelIds(['user' => $user])) {
+        foreach ($computed_channel_ids as $computed_channel_id) {
+          $query->values([
+            $uid,
+            $computed_channel_id,
+            $this->id(),
+            (int) $notify
+          ]);
+        }
       }
     }
 

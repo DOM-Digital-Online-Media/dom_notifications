@@ -157,23 +157,42 @@ interface DomNotificationInterface extends ContentEntityInterface, EntityChanged
   public function setIsRead($is_read, UserInterface $user = NULL);
 
   /**
-   * Gets the Dom Notification channel id.
+   * Gets the Dom Notification channel plugin id.
    *
    * @return string
-   *   Channel id of the Dom Notification.
+   *   Plugin id of the Dom Notification channel.
    */
-  public function getChannelID();
+  public function getChannelPluginID();
 
   /**
-   * Sets the Dom Notification channel id.
+   * Sets the Dom Notification channel plugin id.
    *
-   * @param string $channel
-   *   The Dom Notification channel id.
+   * @param string $plugin_id
+   *   The Dom Notification channel plugin id.
    *
    * @return \Drupal\dom_notifications\Entity\DomNotificationInterface
    *   The called Dom Notification entity.
    */
-  public function setChannelID($channel);
+  public function setChannelPluginID($plugin_id);
+
+  /**
+   * Gets the Dom Notification channel ids.
+   *
+   * @return string[]
+   *   Channel ids of the Dom Notification.
+   */
+  public function getChannelIDs();
+
+  /**
+   * Sets the Dom Notification channel ids.
+   *
+   * @param string[] $channel
+   *   The Dom Notification channel ids.
+   *
+   * @return \Drupal\dom_notifications\Entity\DomNotificationInterface
+   *   The called Dom Notification entity.
+   */
+  public function setChannelIDs($channel);
 
   /**
    * Returns notification channel plugin object.
