@@ -64,7 +64,9 @@ class DomNotificationAccessControlHandler extends EntityAccessControlHandler imp
     $plugin_id = $entity->getChannel()->id();
     $channel = $this->notificationsService->getChannelManager()->createInstance($plugin_id);
     $entities = ['recipient' => $this->entityTypeManager->getStorage('user')->load($account->id())];
-    if ($channel->getComputedChannelId($entities) !== $entity->getChannelID()) {
+    $notification_channels = $entity->getChannelIDs();
+    $user_channels = $channel->getComputedChannelIDs($entities);
+    if (!empty(array_intersect($user_channels, $notification_channels))) {
       return AccessResult::forbidden();
     }
 

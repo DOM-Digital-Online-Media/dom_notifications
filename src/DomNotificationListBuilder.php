@@ -47,7 +47,7 @@ class DomNotificationListBuilder extends EntityListBuilder {
     /* @var \Drupal\dom_notifications\Entity\DomNotification $entity */
     $row['message'] = $entity->get('computed_message')->getString();
     $row['link'] = $entity->retrieveRedirectUri();
-    $row['channel'] = $entity->getChannelID();
+    $row['channel'] = $entity->getChannel()->getLabel();
     $row['author'] = $entity->getOwner()->getDisplayName();
     $row['created'] = $this->dateFormatter->format($entity->getCreatedTime(), 'long');
     return $row + parent::buildRow($entity);

@@ -6,6 +6,9 @@
  */
 
 use Drupal\Core\Database\Database;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Implements hook_schema().
@@ -175,4 +178,54 @@ function dom_notifications_update_8001() {
 
     $schema->createTable($table, $spec);
   }
+}
+
+/**
+ * Make channel id notification entity field multiple.
+ */
+function dom_notifications_update_8002() {
+  // To update the field schema we need to have no field data in the storage,
+  // thus we retrieve it, delete it from storage, and write it back to the
+  // storage after updating the schema.
+  $database = \Drupal::database();
+
+  // Retrieve existing field data.
+  $channel_ids = $database->select('dom_notification_field_data', 'dnfd')
+    ->fields('dnfd', ['id', 'channel_id'])
+    ->execute()
+    ->fetchAllKeyed();
+
+  // Remove data from the storage.
+  $database->update('dom_notification_field_data')
+    ->fields(['channel_id' => NULL])
+    ->execute();
+
+  // Update definitions and schema.
+  $manager = \Drupal::entityDefinitionUpdateManager();
+  /** @var \Drupal\Core\Field\BaseFieldDefinition $storage_definition */
+  $storage_definition = $manager->getFieldStorageDefinition('channel_id', 'dom_notification');
+  $storage_definition->setLabel(t('Channels'));
+  $storage_definition->setDescription(t('The channels identifying set of users subscribed to this notification.'));
+  $storage_definition->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED);
+  $manager->updateFieldStorageDefinition($storage_definition);
+
+  // Restore entity data in the new schema.
+  $insert_query = $database->insert('dom_notification__channel_id')
+    ->fields(['bundle', 'deleted', 'entity_id', 'revision_id', 'langcode', 'delta', 'channel_id_value']);
+  foreach ($channel_ids as $id => $channel_id) {
+    $insert_query->values(['dom_notification', 0, $id, $id, 'en', 0, $channel_id]);
+  }
+  $insert_query->execute();
+}
+
+/**
+ * Add base field to identify channel to which notification was assigned easier.
+ */
+function dom_notifications_update_8003(&$sandbox) {
+  $definition = BaseFieldDefinition::create('string')
+    ->setLabel(new TranslatableMarkup('Channels plugin'))
+    ->setDescription(new TranslatableMarkup('The channels plugin id this notification belongs to.'))
+    ->setTranslatable(FALSE);
+  \Drupal::entityDefinitionUpdateManager()
+    ->installFieldStorageDefinition('channel_plugin_id', 'dom_notification', 'dom_notification', $definition);
 }

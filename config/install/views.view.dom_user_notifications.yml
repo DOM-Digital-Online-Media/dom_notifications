@@ -5,8 +5,6 @@ dependencies:
     - rest
     - serialization
     - user
-_core:
-  default_config_hash: Q4wU617q2Cl2eECjd8eRv8jYgf_KZJU3PddZMw_Zr5Q
 id: dom_user_notifications
 label: 'User notifications'
 module: views
@@ -205,7 +203,7 @@ display:
           plugin_id: field
         channel_plugin_id:
           id: channel_plugin_id
-          table: dom_notifications_user_channels
+          table: dom_notification_field_data
           field: channel_plugin_id
           relationship: none
           group_type: group
@@ -251,7 +249,23 @@ display:
           hide_empty: false
           empty_zero: false
           hide_alter_empty: true
-          plugin_id: standard
+          click_sort_column: value
+          type: string
+          settings:
+            link_to_entity: false
+          group_column: value
+          group_columns: {  }
+          group_rows: true
+          delta_limit: 0
+          delta_offset: 0
+          delta_reversed: false
+          delta_first_last: false
+          multi_type: separator
+          separator: ', '
+          field_api_classes: false
+          entity_type: dom_notification
+          entity_field: channel_plugin_id
+          plugin_id: field
         computed_message:
           id: computed_message
           table: dom_notification
@@ -451,7 +465,7 @@ display:
           id: notify
           table: dom_notifications_user_channels
           field: notify
-          relationship: none
+          relationship: channel_id_value
           group_type: group
           admin_label: ''
           label: ''
@@ -819,55 +833,6 @@ display:
           entity_type: dom_notification
           entity_field: uuid
           plugin_id: string
-        channel_plugin_id:
-          id: channel_plugin_id
-          table: dom_notifications_user_channels
-          field: channel_plugin_id
-          relationship: none
-          group_type: group
-          admin_label: ''
-          operator: '='
-          value: ''
-          group: 1
-          exposed: true
-          expose:
-            operator_id: channel_plugin_id_op
-            label: 'Plugin ID for channel'
-            description: ''
-            use_operator: false
-            operator: channel_plugin_id_op
-            operator_limit_selection: false
-            operator_list: {  }
-            identifier: channel_id
-            required: false
-            remember: false
-            multiple: false
-            remember_roles:
-              authenticated: authenticated
-              anonymous: '0'
-              administrator: '0'
-              content_administrator: '0'
-              edenred: '0'
-              sales_people: '0'
-              editor: '0'
-              hq: '0'
-              global_com: '0'
-              natco: '0'
-              natco_com: '0'
-            placeholder: ''
-          is_grouped: false
-          group_info:
-            label: ''
-            description: ''
-            identifier: ''
-            optional: true
-            widget: select
-            multiple: false
-            remember: false
-            default_group: All
-            default_group_multiple: {  }
-            group_items: {  }
-          plugin_id: string
         is_read:
           id: is_read
           table: dom_notifications_read
@@ -966,6 +931,57 @@ display:
             group_items: {  }
           user: uid
           plugin_id: boolean
+        channel_plugin_id:
+          id: channel_plugin_id
+          table: dom_notification_field_data
+          field: channel_plugin_id
+          relationship: none
+          group_type: group
+          admin_label: ''
+          operator: '='
+          value: ''
+          group: 1
+          exposed: true
+          expose:
+            operator_id: channel_plugin_id_op
+            label: 'Channel plugin id'
+            description: ''
+            use_operator: false
+            operator: channel_plugin_id_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: channel_id
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+              anonymous: '0'
+              administrator: '0'
+              content_administrator: '0'
+              edenred: '0'
+              sales_people: '0'
+              editor: '0'
+              hq: '0'
+              global_com: '0'
+              natco: '0'
+              natco_com: '0'
+            placeholder: ''
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+          entity_type: dom_notification
+          entity_field: channel_plugin_id
+          plugin_id: string
       sorts:
         id:
           id: id
@@ -1000,11 +1016,22 @@ display:
       footer: {  }
       empty: {  }
       relationships:
+        channel_id_value:
+          id: channel_id_value
+          table: dom_notification__channel_id
+          field: channel_id_value
+          relationship: none
+          group_type: group
+          admin_label: Recipients
+          required: true
+          entity_type: dom_notification
+          entity_field: channel_id
+          plugin_id: standard
         uid:
           id: uid
           table: dom_notifications_user_channels
           field: uid
-          relationship: none
+          relationship: channel_id_value
           group_type: group
           admin_label: 'Recipient user'
           required: true
