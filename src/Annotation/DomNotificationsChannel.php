@@ -61,7 +61,7 @@ class DomNotificationsChannel extends Plugin {
    * Predefined message for notifications, will be set to all notifications of
    * the channel if set.
    *
-   * @var \Drupal\Core\Annotation\Translation
+   * @var string
    */
   public $default_message;
 
