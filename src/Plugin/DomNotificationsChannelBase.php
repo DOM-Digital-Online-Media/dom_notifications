@@ -224,7 +224,7 @@ class DomNotificationsChannelBase extends PluginBase implements DomNotifications
       ->condition('dnuc.uid', $uid)
       ->countQuery()
       ->execute()
-      ->fetchField() === '1';
+      ->fetchField() > 0;
   }
 
   /**
