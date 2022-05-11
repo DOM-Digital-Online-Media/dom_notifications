@@ -95,9 +95,7 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
    */
   public function processItem($data) {
     $settings = $this->notificationsService->getNotificationsSettings();
-    $token = $settings['token'];
-
-    if (!$token) {
+    if (!$settings['token']) {
       return;
     }
 
@@ -109,7 +107,9 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
     $action = $entity->retrieveRedirectUri()->__toString();
     foreach ($this->entityTypeManager->getStorage('user')->loadMultiple($data['recipients']) as $user) {
       /** @var \Drupal\user\UserInterface $user */
-      $token = $user->hasField($token) ? $user->get($token)->getString() : NULL;
+      $token = $user->hasField($settings['token'])
+        ? $user->get($settings['token'])->getString()
+        : NULL;
       if (!$token) {
         continue;
       }
