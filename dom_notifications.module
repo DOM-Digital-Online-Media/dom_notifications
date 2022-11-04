@@ -44,6 +44,9 @@ function dom_notifications_entity_update(Drupal\Core\Entity\EntityInterface $ent
     $condition->condition('uid', $entity->id());
   }
 
+  $query->condition($condition);
+  $query->accessCheck(FALSE);
+
   $related_notifications = $query->execute();
   if (empty($related_notifications)) {
     return;
