@@ -216,6 +216,7 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
   public function setRelatedEntity(EntityInterface $entity = NULL) {
     $this->set('related_entity_type', $entity ? $entity->getEntityTypeId() : NULL);
     $this->set('related_entity_id', $entity ? $entity->id() : NULL);
+    $this->relatedEntity = $entity ?? NULL;
     return $this;
   }
 

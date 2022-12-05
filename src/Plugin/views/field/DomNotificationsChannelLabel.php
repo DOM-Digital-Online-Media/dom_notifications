@@ -34,7 +34,9 @@ class DomNotificationsChannelLabel extends FieldPluginBase {
   public function render(ResultRow $values) {
     /** @var \Drupal\dom_notifications\Entity\DomNotificationInterface $notification */
     $notification = $this->getEntity($values);
-    return $notification->getChannel()->getLabel();
+    return !empty($notification->redirect_options->custom_title)
+      ? strip_tags($notification->redirect_options->custom_title)
+      : $notification->getChannel()->getLabel();
   }
 
 }

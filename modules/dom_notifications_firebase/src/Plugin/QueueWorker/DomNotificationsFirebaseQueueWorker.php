@@ -2,10 +2,12 @@
 
 namespace Drupal\dom_notifications_firebase\Plugin\QueueWorker;
 
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\dom_notifications\DomNotificationsServiceInterface;
+use GuzzleHttp\Psr7\Uri;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\firebase\Service\FirebaseMessageService;
 use Drupal\Core\Datetime\DateFormatterInterface;
@@ -50,6 +52,13 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
   protected $entityTypeManager;
 
   /**
+   * Database connection service.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $database;
+
+  /**
    * Constructs a new class instance.
    *
    * @param array $configuration
@@ -66,13 +75,16 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
    *   Provides an interface defining a date formatter.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   Entity type manager service.
+   * @param \Drupal\Core\Database\Connection $database
+   *   Database connection service.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, DomNotificationsServiceInterface $notifications_service, FirebaseMessageService $firebase, DateFormatterInterface $date, EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, DomNotificationsServiceInterface $notifications_service, FirebaseMessageService $firebase, DateFormatterInterface $date, EntityTypeManagerInterface $entity_type_manager, Connection $database) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->notificationsService = $notifications_service;
     $this->firebase = $firebase;
     $this->date = $date;
     $this->entityTypeManager = $entity_type_manager;
+    $this->database = $database;
   }
 
   /**
@@ -86,7 +98,8 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
       $container->get('dom_notifications.service'),
       $container->get('firebase.message'),
       $container->get('date.formatter'),
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
+      $container->get('database')
     );
   }
 
@@ -114,21 +127,36 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
         continue;
       }
 
-      // Fetch all unseen user messages to get count.
-      $unseen = count($this->notificationsService->fetchNotifications($user, ['is_seen' => FALSE]));
+      // Fetch count of unseen notifications with db select to minimise exec time.
+      $query = $this->database->select('dom_notification_field_data', 'dnfd');
+      $query->distinct();
+      $query->leftJoin('dom_notification__channel_id', 'dnci', '[dnfd].[id] = [dnci].[entity_id] AND [dnci].[deleted] = 0');
+      $query->innerJoin('dom_notifications_user_channels', 'dnuc', '[dnci].[channel_id_value] = [dnuc].[channel_id]');
+      $query->leftJoin('dom_notifications_seen', 'dns', '[dnfd].[id] = [dns].[nid] AND [dns].[uid] = [dnuc].[uid]');
+      $query->condition('dnuc.uid', $user->id());
+      $query->condition('dnfd.channel_plugin_id', $entity->getChannel()->id());
+      $query->condition('dnfd.status', 1);
+      $query->where('[dnfd].[uid] <> [dnuc].[uid]');
+      $query->isNull('dns.uid');
+      $unseen = $query->countQuery()->execute()->fetchField();
 
       try {
         $messageService = $this->firebase;
         $messageService->setRecipients($token);
 
         if (in_array($entity->getChannel()->id(), $push_channels)) {
+          $title = !empty($entity->redirect_options->custom_title)
+            ? strip_tags($entity->redirect_options->custom_title)
+            : t('New notification');
           $messageService->setNotification([
-            'title' => t('New notification'),
+            'title' => $title,
             'body' => strip_tags($entity->retrieveMessage()),
             'badge' => $unseen,
             'icon' => 'optional-icon',
             'sound' => 'optional-sound',
-            'click_action' => '.MainActivity',
+            'click_action' => !empty($entity->redirect_options->custom_action)
+              ? strip_tags($entity->redirect_options->custom_action)
+              : '.MainActivity',
           ]);
           $messageService->setData([
             'url' => !empty($action) ? $action : '{}',
