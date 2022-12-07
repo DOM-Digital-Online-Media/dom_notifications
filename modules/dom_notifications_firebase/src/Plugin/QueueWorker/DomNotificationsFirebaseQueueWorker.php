@@ -129,12 +129,12 @@ class DomNotificationsFirebaseQueueWorker extends QueueWorkerBase implements Con
 
       // Fetch count of unseen notifications with db select to minimise exec time.
       $query = $this->database->select('dom_notification_field_data', 'dnfd');
+      $query->fields('dnfd', ['id']);
       $query->distinct();
       $query->leftJoin('dom_notification__channel_id', 'dnci', '[dnfd].[id] = [dnci].[entity_id] AND [dnci].[deleted] = 0');
       $query->innerJoin('dom_notifications_user_channels', 'dnuc', '[dnci].[channel_id_value] = [dnuc].[channel_id]');
       $query->leftJoin('dom_notifications_seen', 'dns', '[dnfd].[id] = [dns].[nid] AND [dns].[uid] = [dnuc].[uid]');
       $query->condition('dnuc.uid', $user->id());
-      $query->condition('dnfd.channel_plugin_id', $entity->getChannel()->id());
       $query->condition('dnfd.status', 1);
       $query->where('[dnfd].[uid] <> [dnuc].[uid]');
       $query->isNull('dns.uid');
