@@ -2,7 +2,7 @@ name: 'Dom Notifications Stacking'
 type: module
 description: 'Implementation of stacking function for notifications from individual channels.'
 core: 8.x
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^8 || ^9 || ^10
 package: 'Dom'
 configure: dom_notifications_stacking.settings_form
 dependencies:
