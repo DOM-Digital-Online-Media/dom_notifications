@@ -388,7 +388,7 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
 
     /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher */
     $dispatcher = \Drupal::service('event_dispatcher');
-    $dispatcher->dispatch(DomNotificationsSeenEvent::EVENT_NAME, $event);
+    $dispatcher->dispatch($event, DomNotificationsSeenEvent::EVENT_NAME);
 
     return TRUE;
   }
@@ -435,7 +435,7 @@ class DomNotification extends ContentEntityBase implements DomNotificationInterf
 
     /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher */
     $dispatcher = \Drupal::service('event_dispatcher');
-    $dispatcher->dispatch(DomNotificationsReadEvent::EVENT_NAME, $event);
+    $dispatcher->dispatch($event, DomNotificationsReadEvent::EVENT_NAME);
 
     return TRUE;
   }

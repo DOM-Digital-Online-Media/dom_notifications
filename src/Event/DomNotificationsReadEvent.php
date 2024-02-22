@@ -2,9 +2,9 @@
 
 namespace Drupal\dom_notifications\Event;
 
+use Drupal\Component\EventDispatcher\Event;
 use Drupal\dom_notifications\Entity\DomNotificationInterface;
 use Drupal\user\UserInterface;
-use Symfony\Contracts\EventDispatcher\Event;
 
 /**
  * Event that is fired when user marks notification as read.
